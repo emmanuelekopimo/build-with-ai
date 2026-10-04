@@ -1,0 +1,49 @@
+# Isolated IoT lab. `lab` is an internal network (no route out); `edge` only exists so your
+# browser can reach the detector UI, the camera admin page and the RTSP stream.
+#   docker compose up --build                    # clean cameras + detector
+#   docker compose --profile trojan up -d trojan # infect cam-garage (harmless simulator)
+services:
+  rtsp:
+    image: bluenviron/mediamtx:latest-ffmpeg
+    volumes: ["./rtsp/mediamtx.yml:/mediamtx.yml:ro"]
+    ports: ["8554:8554"]
+    networks: { lab: { ipv4_address: 10.50.0.2 }, edge: {} }
+
+  cam-lobby:
+    build: { context: ., dockerfile: camera/Dockerfile }
+    environment: { DEVICE: cam-lobby }
+    volumes: ["labdata:/data"]
+    ports: ["8081:80"]
+    networks: { lab: { ipv4_address: 10.50.0.11 }, edge: {} }
+
+  cam-garage:
+    build: { context: ., dockerfile: camera/Dockerfile }
+    environment: { DEVICE: cam-garage }
+    volumes: ["labdata:/data"]
+    networks: { lab: { ipv4_address: 10.50.0.12 } }
+
+  c2:
+    build: { context: ., dockerfile: c2/Dockerfile }
+    networks: { lab: { ipv4_address: 10.50.0.66 } }
+
+  # Shares cam-garage's network namespace so beacons come from the camera's own IP.
+  trojan:
+    profiles: ["trojan"]
+    build: { context: ., dockerfile: trojan_sim/Dockerfile }
+    network_mode: "service:cam-garage"
+    environment: { DEVICE: cam-garage, C2_HOST: 10.50.0.66, START_DELAY: "5" }
+    volumes: ["labdata:/data"]
+    depends_on: [cam-garage, c2]
+
+  detector:
+    build: { context: ., dockerfile: detector/Dockerfile }
+    environment: { LAB_DATA_DIR: /data }
+    volumes: ["labdata:/data"]
+    ports: ["8080:8080"]
+    networks: { lab: { ipv4_address: 10.50.0.100 }, edge: {} }
+
+networks:
+  lab: { driver: bridge, internal: true, ipam: { config: [{ subnet: 10.50.0.0/24 }] } }
+  edge: { driver: bridge }
+volumes:
+  labdata:

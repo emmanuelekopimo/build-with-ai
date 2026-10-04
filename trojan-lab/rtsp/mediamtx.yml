@@ -1,0 +1,8 @@
+# Loops a synthetic test pattern as a live RTSP feed at rtsp://localhost:8554/cam
+paths:
+  cam:
+    runOnInit: >
+      ffmpeg -re -f lavfi -i testsrc=size=640x360:rate=15
+      -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p
+      -f rtsp rtsp://localhost:$RTSP_PORT/$MTX_PATH
+    runOnInitRestart: yes
