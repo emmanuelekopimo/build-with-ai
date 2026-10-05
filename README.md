@@ -9,6 +9,9 @@ the whole detect-and-contain story can be demoed repeatably.
 Full documentation (architecture, data model, every screen, mobile view, deployment and a 5-minute demo script):
 **[docs/IoT-Trojan-Detector-Documentation.pdf](docs/IoT-Trojan-Detector-Documentation.pdf)**
 
+Academic-style project report (chapters, tables, figures, testing and results, references), editable in Word:
+**[docs/IoT-Trojan-Detector-Project-Documentation.docx](docs/IoT-Trojan-Detector-Project-Documentation.docx)**
+
 ## Features
 - **CSV upload** of flow records (`timestamp, device, src_ip, dst_ip, dst_port, protocol, bytes_out`, optional `bytes_in, packets, duration`); common column aliases and ISO/epoch timestamps accepted. Optional known-good **baseline** CSV.
 - **Nine detection rules** mapped to MITRE ATT&CK: known-bad IP, suspicious ports, unusual ports, new external destinations, beaconing, host/port scans, large outbound transfers, flow-size outliers.
@@ -47,7 +50,8 @@ Or upload your own CSV in the UI. Sample files are in `trojan-lab/sample_data/`.
 | `make lab-up` / `lab-infect` / `lab-down` | Start the lab / start the trojan simulator / tear down |
 | `make screenshots` | Retake annotated screenshots with Playwright (`docs/build/capture_screenshots.py`) |
 | `make pdf` | Rebuild the documentation PDF from HTML with Chromium (`docs/build/build_pdf.py`) |
-| `make docs` | Screenshots then PDF |
+| `make docx` | Rebuild the Word project report (`docs/build/export_facts.py` + `build_docx.js`; needs Node with the `docx` package and LibreOffice for contents page numbers) |
+| `make docs` | Screenshots, PDF, then Word |
 
 Docs tooling needs Chromium: `playwright install chromium`, or set `CHROMIUM_PATH` to an existing binary.
 Fonts (Inter, JetBrains Mono, OFL-licensed) are committed in `docs/build/fonts` and embedded in the PDF.
@@ -61,7 +65,8 @@ trojan-lab/
   tests/        pytest suite
   docker-compose.yml
 docs/
-  IoT-Trojan-Detector-Documentation.pdf
+  IoT-Trojan-Detector-Documentation.pdf              PDF guide with annotated screenshots
+  IoT-Trojan-Detector-Project-Documentation.docx     Word project report (dissertation layout)
   screenshots/  annotated screenshots used by the PDF and README
   build/        screenshot + PDF generators, fonts, callout definitions
 ```

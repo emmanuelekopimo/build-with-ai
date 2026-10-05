@@ -1,7 +1,7 @@
 # Common tasks. Run `make help`.
 PY ?= python3
 
-.PHONY: help install run test sample-data lab-up lab-infect lab-down screenshots pdf docs
+.PHONY: help install run test sample-data lab-up lab-infect lab-down screenshots pdf docx docs
 
 help:            ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
@@ -33,4 +33,8 @@ screenshots:     ## retake annotated screenshots with Playwright
 pdf:             ## rebuild docs/IoT-Trojan-Detector-Documentation.pdf from HTML
 	$(PY) docs/build/build_pdf.py
 
-docs: screenshots pdf  ## screenshots + PDF
+docx:            ## rebuild the Word (dissertation-style) documentation; needs node, docx, LibreOffice
+	$(PY) docs/build/export_facts.py
+	node docs/build/build_docx.js
+
+docs: screenshots pdf docx  ## screenshots + PDF + Word
