@@ -52,6 +52,7 @@ Or upload your own CSV in the UI. Sample files are in `trojan-lab/sample_data/`.
 | `make pdf` | Rebuild the documentation PDF from HTML with Chromium (`docs/build/build_pdf.py`) |
 | `make docx` | Rebuild the Word project report (`docs/build/export_facts.py` + `build_docx.js`; needs Node with the `docx` package and LibreOffice for contents page numbers) |
 | `make siwes` | Rebuild the editable SIWES report for the HiiT Plc placement (`docs/build/build_siwes_docx.js`) |
+| `make slides` | Rebuild the SIWES presentation (`docs/build/build_siwes_pptx.js`; needs `npm install pptxgenjs react react-dom react-icons sharp`) |
 | `make docs` | Screenshots, PDF, then both Word reports |
 
 Docs tooling needs Chromium: `playwright install chromium`, or set `CHROMIUM_PATH` to an existing binary.
@@ -69,6 +70,7 @@ docs/
   IoT-Trojan-Detector-Documentation.pdf              PDF guide with annotated screenshots
   IoT-Trojan-Detector-Project-Documentation.docx     Word project report (dissertation layout)
   SIWES-Report-HiiT-Plc-IoT-Trojan-Detector.docx     Editable SIWES report (placeholders highlighted in yellow)
+  SIWES-Presentation-HiiT-Plc-IoT-Trojan-Detector.pptx   19-slide presentation of the report
   screenshots/  annotated screenshots used by the PDF and README
   build/        screenshot + PDF generators, fonts, callout definitions
 ```

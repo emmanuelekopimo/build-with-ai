@@ -1,7 +1,7 @@
 # Common tasks. Run `make help`.
 PY ?= python3
 
-.PHONY: help install run test sample-data lab-up lab-infect lab-down screenshots pdf docx siwes docs
+.PHONY: help install run test sample-data lab-up lab-infect lab-down screenshots pdf docx siwes slides docs
 
 help:            ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
@@ -40,5 +40,8 @@ docx:            ## rebuild the Word (dissertation-style) documentation; needs n
 siwes:           ## rebuild the editable SIWES report for HiiT Plc (Word)
 	$(PY) docs/build/export_facts.py
 	node docs/build/build_siwes_docx.js
+
+slides:          ## rebuild the SIWES slide deck (needs: npm install pptxgenjs react react-dom react-icons sharp)
+	node docs/build/build_siwes_pptx.js
 
 docs: screenshots pdf docx siwes  ## screenshots + PDF + Word reports
