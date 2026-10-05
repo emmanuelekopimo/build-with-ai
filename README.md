@@ -51,7 +51,8 @@ Or upload your own CSV in the UI. Sample files are in `trojan-lab/sample_data/`.
 | `make screenshots` | Retake annotated screenshots with Playwright (`docs/build/capture_screenshots.py`) |
 | `make pdf` | Rebuild the documentation PDF from HTML with Chromium (`docs/build/build_pdf.py`) |
 | `make docx` | Rebuild the Word project report (`docs/build/export_facts.py` + `build_docx.js`; needs Node with the `docx` package and LibreOffice for contents page numbers) |
-| `make docs` | Screenshots, PDF, then Word |
+| `make siwes` | Rebuild the editable SIWES report for the HiiT Plc placement (`docs/build/build_siwes_docx.js`) |
+| `make docs` | Screenshots, PDF, then both Word reports |
 
 Docs tooling needs Chromium: `playwright install chromium`, or set `CHROMIUM_PATH` to an existing binary.
 Fonts (Inter, JetBrains Mono, OFL-licensed) are committed in `docs/build/fonts` and embedded in the PDF.
@@ -67,6 +68,7 @@ trojan-lab/
 docs/
   IoT-Trojan-Detector-Documentation.pdf              PDF guide with annotated screenshots
   IoT-Trojan-Detector-Project-Documentation.docx     Word project report (dissertation layout)
+  SIWES-Report-HiiT-Plc-IoT-Trojan-Detector.docx     Editable SIWES report (placeholders highlighted in yellow)
   screenshots/  annotated screenshots used by the PDF and README
   build/        screenshot + PDF generators, fonts, callout definitions
 ```

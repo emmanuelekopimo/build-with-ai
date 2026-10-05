@@ -1,7 +1,7 @@
 # Common tasks. Run `make help`.
 PY ?= python3
 
-.PHONY: help install run test sample-data lab-up lab-infect lab-down screenshots pdf docx docs
+.PHONY: help install run test sample-data lab-up lab-infect lab-down screenshots pdf docx siwes docs
 
 help:            ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
@@ -37,4 +37,8 @@ docx:            ## rebuild the Word (dissertation-style) documentation; needs n
 	$(PY) docs/build/export_facts.py
 	node docs/build/build_docx.js
 
-docs: screenshots pdf docx  ## screenshots + PDF + Word
+siwes:           ## rebuild the editable SIWES report for HiiT Plc (Word)
+	$(PY) docs/build/export_facts.py
+	node docs/build/build_siwes_docx.js
+
+docs: screenshots pdf docx siwes  ## screenshots + PDF + Word reports
