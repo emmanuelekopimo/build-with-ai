@@ -1,0 +1,175 @@
+{
+  "01-landing": [
+    {
+      "n": 1,
+      "selector": "#flows"
+    },
+    {
+      "n": 2,
+      "selector": "#baseline"
+    },
+    {
+      "n": 3,
+      "selector": "#f button"
+    },
+    {
+      "n": 4,
+      "selector": "main > .card:nth-of-type(1) p.mut"
+    },
+    {
+      "n": 5,
+      "selector": "[data-s=infected]"
+    },
+    {
+      "n": 6,
+      "selector": "#live"
+    },
+    {
+      "n": 7,
+      "selector": "#base"
+    }
+  ],
+  "02-files-selected": [
+    {
+      "n": 1,
+      "selector": "#flows"
+    },
+    {
+      "n": 2,
+      "selector": "#baseline"
+    },
+    {
+      "n": 3,
+      "selector": "#f button"
+    }
+  ],
+  "03-error": [
+    {
+      "n": 1,
+      "selector": "#err"
+    },
+    {
+      "n": 2,
+      "selector": "#flows"
+    }
+  ],
+  "04-results": [
+    {
+      "n": 1,
+      "selector": "#tiles"
+    },
+    {
+      "n": 2,
+      "selector": "#devs tr:first-child td:nth-child(2)"
+    },
+    {
+      "n": 3,
+      "selector": "#devs tr:first-child td:nth-child(3)"
+    },
+    {
+      "n": 4,
+      "selector": "#devs tr:first-child td:nth-child(5)"
+    },
+    {
+      "n": 5,
+      "selector": "#devs tr:first-child td:nth-child(7)"
+    }
+  ],
+  "05-findings": [
+    {
+      "n": 1,
+      "selector": "#fnd tr:first-child td:nth-child(1)"
+    },
+    {
+      "n": 2,
+      "selector": "#fnd tr:first-child td:nth-child(3)"
+    },
+    {
+      "n": 3,
+      "selector": "#fnd tr:first-child td:nth-child(4)"
+    },
+    {
+      "n": 4,
+      "selector": "#fnd tr:first-child td:nth-child(5)"
+    },
+    {
+      "n": 5,
+      "selector": "#fnd tr:first-child td:nth-child(6)"
+    }
+  ],
+  "06-live": [
+    {
+      "n": 1,
+      "selector": "#live"
+    },
+    {
+      "n": 2,
+      "selector": "#tiles .tile:nth-child(6)"
+    },
+    {
+      "n": 3,
+      "selector": "#devs tr:first-child td:nth-child(1)"
+    }
+  ],
+  "07-clean": [
+    {
+      "n": 1,
+      "selector": "#tiles .tile:nth-child(3)"
+    },
+    {
+      "n": 2,
+      "selector": "#devs tr:first-child td:nth-child(2)"
+    },
+    {
+      "n": 3,
+      "selector": "#fnd td"
+    }
+  ],
+  "08-quarantine": [
+    {
+      "n": 1,
+      "selector": "#devs tr:first-child td:nth-child(2)"
+    },
+    {
+      "n": 2,
+      "selector": "#devs tr:first-child td:nth-child(7)"
+    }
+  ],
+  "m01-landing_overflow_x": false,
+  "m01-landing": [
+    {
+      "n": 1,
+      "selector": "#flows"
+    },
+    {
+      "n": 2,
+      "selector": "#f button"
+    },
+    {
+      "n": 3,
+      "selector": "[data-s=infected]"
+    }
+  ],
+  "m02-results_overflow_x": false,
+  "m02-results": [
+    {
+      "n": 1,
+      "selector": "#tiles"
+    },
+    {
+      "n": 2,
+      "selector": "#devs tr:first-child td:nth-child(1)"
+    }
+  ],
+  "m03-findings_overflow_x": false,
+  "m03-findings": [
+    {
+      "n": 1,
+      "selector": "#fnd tr:first-child td:nth-child(1)"
+    },
+    {
+      "n": 2,
+      "selector": "#fnd tr:first-child td:nth-child(3)"
+    }
+  ]
+}
