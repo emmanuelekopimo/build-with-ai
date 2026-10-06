@@ -31,7 +31,7 @@ services:
     profiles: ["trojan"]
     build: { context: ., dockerfile: trojan_sim/Dockerfile }
     network_mode: "service:cam-garage"
-    environment: { DEVICE: cam-garage, C2_HOST: 10.50.0.66, START_DELAY: "5" }
+    environment: { DEVICE: cam-garage, C2_HOST: 10.50.0.66, START_DELAY: "5", ARTIFACTS: "/tmp/.kworker-update:/etc/cron.d/kworker" }
     volumes: ["labdata:/data"]
     depends_on: [cam-garage, c2]
 

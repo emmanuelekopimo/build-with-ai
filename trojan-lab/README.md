@@ -58,6 +58,21 @@ Without a baseline, periodic traffic on well-known ports (NTP, RTSP, 443…) is 
 ## Tests
 `pip install pytest flask && python -m pytest tests`
 
+## Run the simulator without Docker (safe local test)
+By default the simulator keeps its "persistence" files under `/tmp` (`/tmp/.kworker-update`, `/tmp/cron.d/kworker`), so it never touches
+your real cron configuration. Linux/macOS only (the flow logger uses `fcntl`).
+```bash
+cd trojan-lab
+export COMMON_DIR=$PWD/common LAB_DATA_DIR=/tmp/lab FLOW_LOG=/tmp/lab/flows.csv
+export DEVICE=cam-garage C2_HOST=127.0.0.1 C2_PORT=4444 BEACON_INTERVAL=5
+mkdir -p /tmp/lab
+python3 c2/c2.py &                          # fake C2 (terminal 1)
+python3 trojan_sim/kworker_upd.py           # simulator (terminal 2); beacons appear in the C2 output
+mkdir -p /tmp/lab/quarantine && touch /tmp/lab/quarantine/cam-garage   # contain it: files removed, process exits
+```
+The simulator checks for the marker between beacons, so it reacts within one beacon interval (a few seconds longer if it is mid scan-burst).
+Inside Docker, `docker-compose.yml` sets `ARTIFACTS` to the realistic `/etc/cron.d/kworker` path, which is harmless in the container.
+
 ## Limits
 Flow telemetry in the lab comes from the simulators (a real deployment would use Zeek/Suricata or the
 router's NetFlow). Quarantine in the lab is a marker file; on real networks wire `/api/quarantine` to a

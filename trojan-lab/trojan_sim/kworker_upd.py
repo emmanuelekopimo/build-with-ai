@@ -20,7 +20,9 @@ C2 = os.environ.get("C2_HOST", "10.50.0.66")
 C2_PORT = int(os.environ.get("C2_PORT", "4444"))
 INTERVAL = float(os.environ.get("BEACON_INTERVAL", "15"))
 QUARANTINE = os.path.join(os.environ.get("LAB_DATA_DIR", "/data"), "quarantine", DEVICE)
-ARTIFACTS = os.environ.get("ARTIFACTS", "/tmp/.kworker-update:/etc/cron.d/kworker").split(":")
+# Safe default: both artifacts stay under /tmp, so running this directly on a host never touches the real cron config.
+# docker-compose.yml sets ARTIFACTS to the realistic /etc/cron.d path, which is harmless inside the container.
+ARTIFACTS = os.environ.get("ARTIFACTS", "/tmp/.kworker-update:/tmp/cron.d/kworker").split(":")
 IP = flowlog.my_ip()
 
 
