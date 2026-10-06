@@ -40,6 +40,13 @@ def _too_big(_):
     return jsonify(error=f"file too large (max {MAX_UPLOAD // 1048576} MB)"), 413
 
 
+def _no_live_capture():
+    return jsonify(error=(f"No live capture found at {LIVE_FLOWS}. The lab writes flows.csv there once it is running: start it with "
+                          "`python trojan-lab/local_lab.py` (or `make lab-up` for Docker), wait ~10 seconds and try again. "
+                          "The detector and the lab must use the same LAB_DATA_DIR (local_lab.py sets this for you when it starts the detector). "
+                          "Or use 'Load sample' / upload a CSV instead.")), 404
+
+
 @app.get("/")
 def index():
     return render_template("index.html", required=engine.REQUIRED)
@@ -65,7 +72,7 @@ def analyze_sample():
 @app.post("/api/analyze/live")
 def analyze_live():
     if not LIVE_FLOWS.exists():
-        return jsonify(error=f"no live capture at {LIVE_FLOWS} yet (start the lab)"), 404
+        return _no_live_capture()
     return jsonify(_analyse(LIVE_FLOWS.read_bytes(), None))
 
 
@@ -73,7 +80,7 @@ def analyze_live():
 def baseline_live():
     """Freeze the current live capture as the 'known good' baseline (demo step 2)."""
     if not LIVE_FLOWS.exists():
-        return jsonify(error="no live capture yet"), 404
+        return _no_live_capture()
     _state["baseline"] = engine.build_baseline(engine.parse_csv(LIVE_FLOWS.read_bytes()))
     return jsonify(ok=True, devices=sorted(_state["baseline"]))
 

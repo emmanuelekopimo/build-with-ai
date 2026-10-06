@@ -52,3 +52,15 @@ def test_sample_and_quarantine_roundtrip(client):
 
 def test_quarantine_rejects_traversal(client):
     assert client.post("/api/quarantine/..%2Fx").status_code in (400, 404)
+
+
+def test_live_capture_missing_gives_actionable_error(client):
+    for path in ("/api/analyze/live", "/api/baseline/live"):
+        r = client.post(path)
+        err = r.get_json()["error"]
+        assert r.status_code == 404 and "local_lab.py" in err and str(appmod.LIVE_FLOWS) in err
+
+
+def test_live_capture_present(client):
+    appmod.LIVE_FLOWS.write_bytes((ROOT / "sample_data" / "infected_flows.csv").read_bytes())
+    assert client.post("/api/analyze/live").get_json()["summary"]["compromised"] == 1
