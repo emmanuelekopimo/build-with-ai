@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IoT Trojan Detector</title>
+<style>
+:root{--bg:#0f1419;--card:#18202a;--fg:#e6edf3;--mut:#8b98a5;--line:#2a3441;--ok:#3fb950;--warn:#d29922;--bad:#f85149;--acc:#58a6ff}
+@media (prefers-color-scheme:light){:root{--bg:#f6f8fa;--card:#fff;--fg:#1f2328;--mut:#59636e;--line:#d1d9e0;--ok:#1a7f37;--warn:#9a6700;--bad:#cf222e;--acc:#0969da}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 60px}h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:0 0 12px}
+.sub{color:var(--mut);margin:0 0 20px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}label{display:block;font-size:13px;color:var(--mut);margin-bottom:4px}
+input[type=file]{color:var(--fg);max-width:100%}
+button{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:8px 14px;font:inherit;cursor:pointer}
+button.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}button.bad{background:var(--bad)}button:disabled{opacity:.5}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.tile b{display:block;font-size:26px}.tile span{color:var(--mut);font-size:13px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mut);font-weight:500;font-size:13px}
+.wrap{overflow-x:auto}.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;border:1px solid currentColor}
+.clean,.low{color:var(--ok)}.suspicious,.medium{color:var(--warn)}.compromised,.critical,.high{color:var(--bad)}
+#err{color:var(--bad);margin-top:10px;white-space:pre-wrap}code{background:var(--line);padding:1px 5px;border-radius:4px;font-size:13px}.mut{color:var(--mut);font-size:13px}
+</style></head><body><main>
+<h1>IoT Trojan Detector</h1>
+<p class="sub">Upload network-flow CSVs from your IoT devices; the engine flags beaconing, C2 contact, scans, odd ports and exfiltration.</p>
+
+<div class="card"><h2>1 · Upload flows</h2>
+<form id="f" class="row">
+ <div><label for="flows">Capture to analyse (required)</label><input id="flows" type="file" name="flows" accept=".csv,text/csv"></div>
+ <div><label for="baseline">Known-good baseline (optional)</label><input id="baseline" type="file" name="baseline" accept=".csv,text/csv"></div>
+ <button>Analyse</button>
+</form>
+<p class="mut">Required columns: {% for c in required %}<code>{{c}}</code> {% endfor %}· optional <code>bytes_in</code> <code>packets</code> <code>duration</code>. Common aliases (<code>ts</code>, <code>device_id</code>, <code>dport</code>, <code>proto</code>, <code>bytes</code>…) are accepted; timestamps may be ISO-8601 or epoch seconds.</p>
+<div class="row"><button class="sec" data-s="infected">Load sample: infected</button><button class="sec" data-s="clean">Load sample: clean</button>
+<button class="sec" id="live">Analyse live lab capture</button><button class="sec" id="base">Freeze live capture as baseline</button></div>
+<div id="err" role="alert"></div></div>
+
+<div id="out" hidden>
+ <div class="card"><div class="tiles" id="tiles"></div></div>
+ <div class="card"><h2>Devices</h2><div class="wrap"><table><thead><tr><th>Device</th><th>Status</th><th>Risk</th><th>Flows</th><th>Bytes out</th><th>Findings</th><th></th></tr></thead><tbody id="devs"></tbody></table></div></div>
+ <div class="card"><h2>Findings</h2><div class="wrap"><table><thead><tr><th>Severity</th><th>Device</th><th>Finding</th><th>Detail</th><th>ATT&amp;CK</th><th>Window (UTC)</th></tr></thead><tbody id="fnd"></tbody></table></div></div>
+</div>
+<script>
+const $=s=>document.querySelector(s), esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+' MB':n>=1e3?(n/1e3).toFixed(1)+' kB':n+' B';
+const t=ts=>ts==null?'—':new Date(ts*1000).toISOString().slice(0,19).replace('T',' ');
+let last=null;
+async function call(p,opt){$('#err').textContent='';try{const r=await fetch(p,opt),j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j}catch(e){$('#err').textContent=e.message;return null}}
+function render(r){last=r;$('#out').hidden=false;const s=r.summary;
+ $('#tiles').innerHTML=[['Flows',s.flows],['Devices',s.devices],['Findings',s.findings],['Compromised',s.compromised],['Suspicious',s.suspicious],['Baseline',s.with_baseline?'yes':'no']].map(([k,v])=>`<div class="tile"><b>${esc(v)}</b><span>${k}</span></div>`).join('');
+ $('#devs').innerHTML=r.devices.map(d=>{const q=r.quarantined.includes(d.device);return `<tr><td>${esc(d.device)}<div class="mut">${esc(d.src_ips.join(', '))}</div></td><td><span class="pill ${d.status}">${d.status}</span></td><td>${d.score}</td><td>${d.flows}</td><td>${fmt(d.bytes_out)}</td><td>${d.findings}</td><td>${d.status==='clean'&&!q?'':q?`<button class="sec" data-r="${esc(d.device)}">Release</button>`:`<button class="bad" data-q="${esc(d.device)}">Quarantine</button>`}</td></tr>`}).join('');
+ $('#fnd').innerHTML=r.findings.length?r.findings.map(f=>`<tr><td><span class="pill ${f.severity}">${f.severity}</span></td><td>${esc(f.device)}</td><td>${esc(f.title)}</td><td>${esc(f.detail)}</td><td>${esc(f.mitre)}</td><td class="mut">${t(f.first_seen)}<br>${t(f.last_seen)}</td></tr>`).join(''):'<tr><td colspan="6" class="mut">No findings — all devices look clean.</td></tr>'}
+$('#f').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);if(!fd.get('flows').name){$('#err').textContent='Choose a flow CSV first.';return}const r=await call('/api/analyze',{method:'POST',body:fd});r&&render(r)};
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{const r=await call('/api/analyze/sample',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:b.dataset.s})});r&&render(r)});
+$('#live').onclick=async()=>{const r=await call('/api/analyze/live',{method:'POST'});r&&render(r)};
+$('#base').onclick=async()=>{const r=await call('/api/baseline/live',{method:'POST'});if(r)$('#err').textContent='';};
+$('#devs').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset.q||b.dataset.r;
+ await call('/api/quarantine/'+encodeURIComponent(d),{method:b.dataset.q?'POST':'DELETE'});last.quarantined=b.dataset.q?[...last.quarantined,d]:last.quarantined.filter(x=>x!==d);render(last)};
+</script></main></body></html>
