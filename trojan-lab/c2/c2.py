@@ -16,4 +16,5 @@ class S(socketserver.ThreadingTCPServer):
 
 if __name__ == "__main__":
     print("fake C2 listening on :4444", flush=True)
-    S(("0.0.0.0", int(__import__("os").environ.get("PORT", 4444))), H).serve_forever()
+    import os
+    S((os.environ.get("HOST", "0.0.0.0"), int(os.environ.get("PORT", 4444))), H).serve_forever()

@@ -23,7 +23,13 @@ Academic-style project report (chapters, tables, figures, testing and results, r
 
 ## Quick start
 
-Detector only (no Docker):
+No Docker (Windows, macOS, Linux) with two live simulated cameras:
+```bash
+pip install flask pillow
+python trojan-lab/local_lab.py     # Windows: py trojan-lab\local_lab.py
+```
+
+Detector only:
 ```bash
 make install
 make run            # http://localhost:8080 , click "Load sample: infected"
@@ -47,6 +53,7 @@ Or upload your own CSV in the UI. Sample files are in `trojan-lab/sample_data/`.
 | `make run` | Start the detector UI on port 8080 |
 | `make test` | Run the unit tests |
 | `make sample-data` | Regenerate the sample flow CSVs |
+| `make lab-local` | Whole lab without Docker (also runs on Windows via `python trojan-lab/local_lab.py`) |
 | `make lab-up` / `lab-infect` / `lab-down` | Start the lab / start the trojan simulator / tear down |
 | `make screenshots` | Retake annotated screenshots with Playwright (`docs/build/capture_screenshots.py`) |
 | `make pdf` | Rebuild the documentation PDF from HTML with Chromium (`docs/build/build_pdf.py`) |

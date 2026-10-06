@@ -10,19 +10,25 @@ import os
 import random
 import socket
 import sys
+import tempfile
 import time
 
-sys.path.insert(0, os.environ.get("COMMON_DIR", "/app/common"))
+sys.path.insert(0, os.environ.get("COMMON_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common")))
 import flowlog  # noqa: E402
 
 DEVICE = os.environ.get("DEVICE", "cam-garage")
 C2 = os.environ.get("C2_HOST", "10.50.0.66")
 C2_PORT = int(os.environ.get("C2_PORT", "4444"))
 INTERVAL = float(os.environ.get("BEACON_INTERVAL", "15"))
-QUARANTINE = os.path.join(os.environ.get("LAB_DATA_DIR", "/data"), "quarantine", DEVICE)
-# Safe default: both artifacts stay under /tmp, so running this directly on a host never touches the real cron config.
+QUARANTINE = os.path.join(flowlog.DATA_DIR, "quarantine", DEVICE)
+# Scan targets. Docker lab: 10.50.0.x (an internal network). Direct runs should use SCAN_PREFIX=127.0.0. so nothing leaves the machine.
+SCAN_PREFIX = os.environ.get("SCAN_PREFIX", "10.50.0.")
+SCAN_FIRST, SCAN_LAST = int(os.environ.get("SCAN_FIRST", "20")), int(os.environ.get("SCAN_LAST", "31"))
+# Safe default: both artifacts stay under the temp directory, so running this directly never touches the real cron config.
 # docker-compose.yml sets ARTIFACTS to the realistic /etc/cron.d path, which is harmless inside the container.
-ARTIFACTS = os.environ.get("ARTIFACTS", "/tmp/.kworker-update:/tmp/cron.d/kworker").split(":")
+# Entries are separated by os.pathsep (":" on Linux, ";" on Windows, where drive letters contain a colon).
+_TMP = tempfile.gettempdir()
+ARTIFACTS = os.environ.get("ARTIFACTS", os.pathsep.join([os.path.join(_TMP, ".kworker-update"), os.path.join(_TMP, "cron.d", "kworker")])).split(os.pathsep)
 IP = flowlog.my_ip()
 
 
@@ -57,8 +63,8 @@ def beacon():
 
 def scan_burst():
     print("[sim] scan-like burst", flush=True)
-    for i in range(20, 32):
-        dst = f"10.50.0.{i}"
+    for i in range(SCAN_FIRST, SCAN_LAST + 1):
+        dst = f"{SCAN_PREFIX}{i}"
         t0 = time.time()
         s = socket.socket()
         s.settimeout(0.2)

@@ -58,20 +58,54 @@ Without a baseline, periodic traffic on well-known ports (NTP, RTSP, 443…) is 
 ## Tests
 `pip install pytest flask && python -m pytest tests`
 
-## Run the simulator without Docker (safe local test)
-By default the simulator keeps its "persistence" files under `/tmp` (`/tmp/.kworker-update`, `/tmp/cron.d/kworker`), so it never touches
-your real cron configuration. Linux/macOS only (the flow logger uses `fcntl`).
+## Run everything without Docker (Windows, macOS, Linux)
 ```bash
-cd trojan-lab
-export COMMON_DIR=$PWD/common LAB_DATA_DIR=/tmp/lab FLOW_LOG=/tmp/lab/flows.csv
-export DEVICE=cam-garage C2_HOST=127.0.0.1 C2_PORT=4444 BEACON_INTERVAL=5
-mkdir -p /tmp/lab
-python3 c2/c2.py &                          # fake C2 (terminal 1)
-python3 trojan_sim/kworker_upd.py           # simulator (terminal 2); beacons appear in the C2 output
-mkdir -p /tmp/lab/quarantine && touch /tmp/lab/quarantine/cam-garage   # contain it: files removed, process exits
+python trojan-lab/local_lab.py          # Windows: py trojan-lab\local_lab.py
 ```
-The simulator checks for the marker between beacons, so it reacts within one beacon interval (a few seconds longer if it is mid scan-burst).
-Inside Docker, `docker-compose.yml` sets `ARTIFACTS` to the realistic `/etc/cron.d/kworker` path, which is harmless in the container.
+Starts the fake C2, two simulated **live cameras**, and the detector. Open <http://localhost:8080> (detector) and
+<http://localhost:8081> / <http://localhost:8082> (live view, login `admin` / `admin`). Wait about a minute, click
+**Freeze live capture as baseline**, press Enter in the terminal to infect `cam-garage`, then **Analyse live lab capture** and **Quarantine**.
+Ctrl+C stops everything and removes the simulated persistence files. Everything binds to `127.0.0.1` and the simulated scan targets
+`127.0.0.x`, so nothing leaves your machine. Needs `pip install flask pillow`.
+
+Windows notes: `flowlog.py` uses a `msvcrt` lock on Windows (covered by a simulated test, but not run on real Windows in CI), data goes to
+`%TEMP%\trojan-lab-data`, and persistence files go to `%TEMP%`. Windows Firewall may ask once to allow Python on localhost.
+
+### Running pieces by hand
+```bash
+export COMMON_DIR=$PWD/trojan-lab/common LAB_DATA_DIR=/tmp/lab FLOW_LOG=/tmp/lab/flows.csv
+export DEVICE=cam-garage C2_HOST=127.0.0.1 C2_PORT=4444 BEACON_INTERVAL=5 SCAN_PREFIX=127.0.0.   # SCAN_PREFIX keeps the scan on loopback
+python3 trojan-lab/c2/c2.py &                      # fake C2
+python3 trojan-lab/trojan_sim/kworker_upd.py       # simulator
+mkdir -p /tmp/lab/quarantine && touch /tmp/lab/quarantine/cam-garage    # contain it: files removed, process exits
+```
+PowerShell: `$env:COMMON_DIR="$PWD\trojan-lab\common"; $env:SCAN_PREFIX="127.0.0."` and so on, then `py trojan-lab\c2\c2.py`.
+The simulator keeps its "persistence" files under the temp directory by default, so it never touches your real cron configuration;
+inside Docker, `docker-compose.yml` sets the realistic `/etc/cron.d/kworker` path. It checks for the quarantine marker between beacons.
+**Do not run the simulator on a network where `10.50.0.20-31` are real hosts without setting `SCAN_PREFIX`.**
+
+## Simulating a live camera (no physical camera)
+| Option | What you get | How |
+|---|---|---|
+| Built-in MJPEG camera (this repo) | Live moving picture in any browser or VLC, with login, snapshots and realistic flows. No ffmpeg or Docker | `python trojan-lab/local_lab.py`, then <http://localhost:8081> (stream: `/stream`) |
+| Docker RTSP loop (this repo) | A real RTSP stream, like most IP cameras | `make lab-up`, then `rtsp://localhost:8554/cam` in VLC |
+| Any video file as an RTSP camera | Your own footage on loop | Run [MediaMTX](https://github.com/bluenviron/mediamtx), then `ffmpeg -re -stream_loop -1 -i clip.mp4 -c copy -f rtsp rtsp://localhost:8554/cam` |
+| Your laptop webcam as a network camera | Real live video | OBS Studio or ffmpeg publishing to MediaMTX, or the "IP Webcam" phone app, which exposes an HTTP/RTSP stream |
+| Real cheap hardware | A physical device | ESP32-CAM (a few dollars) or a Raspberry Pi with a camera module |
+The detector only needs flow records (who talked to whom), so for detection demos any of these is equivalent; the video is for realism.
+
+## Hosting the detector online
+Only the **detector** (Flask app) is a good fit for a web host; the multi-container lab with an internal network belongs on your own machine or a VM
+running `docker compose`. The detector image reads `$PORT`; set `WEB_CONCURRENCY=1` so the in-memory baseline is shared between requests.
+| Host | Notes |
+|---|---|
+| Render | Deploy from GitHub using `trojan-lab/detector/Dockerfile` (context `trojan-lab`); free instances sleep when idle |
+| Railway / Fly.io | Docker deploys; small usage-based or trial allowances |
+| Hugging Face Spaces | Docker Space; handy for demos and a shareable link |
+| PythonAnywhere | Flask-friendly without Docker; free tier is limited |
+| Google Cloud Run / Azure App Service | Production-style container hosting |
+Free tiers change often, so check each provider's current terms. **Add authentication (or keep the site private) before exposing it:**
+the app has no login and has an upload endpoint and a quarantine endpoint.
 
 ## Limits
 Flow telemetry in the lab comes from the simulators (a real deployment would use Zeek/Suricata or the

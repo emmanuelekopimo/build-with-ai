@@ -1,13 +1,13 @@
 # Common tasks. Run `make help`.
 PY ?= python3
 
-.PHONY: help install run test sample-data lab-up lab-infect lab-down screenshots pdf docx siwes slides docs
+.PHONY: help install run test sample-data lab-local lab-up lab-infect lab-down screenshots pdf docx siwes slides docs
 
 help:            ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
 
 install:         ## install detector, test and docs dependencies
-	$(PY) -m pip install -r trojan-lab/detector/requirements.txt pytest -r docs/build/requirements.txt
+	$(PY) -m pip install -r trojan-lab/detector/requirements.txt pillow pytest -r docs/build/requirements.txt
 
 run:             ## start the detector UI on http://localhost:8080 (no Docker)
 	cd trojan-lab/detector && LAB_DATA_DIR=$${LAB_DATA_DIR:-/tmp/lab} $(PY) app.py
@@ -17,6 +17,9 @@ test:            ## run the unit tests
 
 sample-data:     ## regenerate the sample flow CSVs
 	$(PY) trojan-lab/detector/flowgen.py --out trojan-lab/sample_data
+
+lab-local:       ## whole lab without Docker: fake C2, two live cameras, detector (Enter infects cam-garage)
+	$(PY) trojan-lab/local_lab.py
 
 lab-up:          ## start the Docker lab (cameras, RTSP, C2, detector)
 	cd trojan-lab && docker compose up --build -d

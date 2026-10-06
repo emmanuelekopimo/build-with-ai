@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import os
 import re
+import tempfile
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request
 
 import engine
 
-DATA_DIR = Path(os.environ.get("LAB_DATA_DIR", "/data"))
+DATA_DIR = Path(os.environ.get("LAB_DATA_DIR") or ("/data" if os.name != "nt" else os.path.join(tempfile.gettempdir(), "trojan-lab-data")))
 LIVE_FLOWS = DATA_DIR / "flows.csv"
 QUARANTINE = DATA_DIR / "quarantine"
 SAMPLES = Path(os.environ.get("SAMPLE_DIR", Path(__file__).parent.parent / "sample_data"))
