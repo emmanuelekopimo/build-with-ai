@@ -35,6 +35,22 @@ services:
     volumes: ["labdata:/data"]
     depends_on: [cam-garage, c2]
 
+  # Always-on, pre-infected camera: no profile needed, its trojan starts with the stack, so its feed is already
+  # glitched (COMPROMISED banner, corrupted video, fake process readout) the moment you open it.
+  cam-vault:
+    build: { context: ., dockerfile: camera/Dockerfile }
+    environment: { DEVICE: cam-vault }
+    volumes: ["labdata:/data"]
+    ports: ["8083:80"]
+    networks: { lab: { ipv4_address: 10.50.0.13 }, edge: {} }
+
+  trojan-vault:
+    build: { context: ., dockerfile: trojan_sim/Dockerfile }
+    network_mode: "service:cam-vault"
+    environment: { DEVICE: cam-vault, C2_HOST: 10.50.0.66, START_DELAY: "2", ARTIFACTS: "/tmp/.kworker-update:/etc/cron.d/kworker" }
+    volumes: ["labdata:/data"]
+    depends_on: [cam-vault, c2]
+
   detector:
     build: { context: ., dockerfile: detector/Dockerfile }
     environment: { LAB_DATA_DIR: /data }

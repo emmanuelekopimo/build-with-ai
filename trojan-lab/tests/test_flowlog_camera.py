@@ -1,4 +1,5 @@
 import csv
+import os
 import importlib
 import sys
 import threading
@@ -100,3 +101,15 @@ def test_camera_stream_is_live_mjpeg(cam):
     assert first.startswith(b"--frame") and b"image/jpeg" in first and second.startswith(b"--frame")
     assert first != second                                   # frames change over time (motion, timestamp, noise)
     r.close()
+
+
+def test_camera_shows_compromise_when_infected_marker_present(cam, tmp_path, monkeypatch):
+    camera, c = cam
+    monkeypatch.setattr(camera, "INFECTED_MARKER", str(tmp_path / "infected" / "cam-lobby"))
+    clean = c.get("/snapshot.jpg", headers=AUTH).data
+    os.makedirs(tmp_path / "infected")
+    (tmp_path / "infected" / "cam-lobby").write_text("x")
+    infected = c.get("/snapshot.jpg", headers=AUTH).data
+    assert clean != infected and len(infected) > 100
+    admin_html = c.get("/", headers=AUTH).data
+    assert b"COMPROMISED" in admin_html

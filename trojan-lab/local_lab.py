@@ -43,12 +43,19 @@ def main():
         procs.append(spawn("c2/c2.py", PORT=4444))
         procs.append(spawn("camera/camera.py", DEVICE="cam-lobby", PORT=8081))
         procs.append(spawn("camera/camera.py", DEVICE="cam-garage", PORT=8082))
+        procs.append(spawn("camera/camera.py", DEVICE="cam-vault", PORT=8083))
         procs.append(spawn("detector/app.py", PORT=8080))
-        time.sleep(2)
+        time.sleep(1)
+        # cam-vault is pre-infected: its trojan simulator is already running when the lab starts, so its
+        # feed is glitched from the first view -- a worked example you don't have to trigger yourself.
+        procs.append(spawn("trojan_sim/kworker_upd.py", DEVICE="cam-vault", C2_HOST="127.0.0.1", C2_PORT=4444,
+                           BEACON_INTERVAL=5, SCAN_PREFIX="127.0.0.", START_DELAY="0"))
+        time.sleep(1)
         print("\nLab running (data in %s)\n" % DATA)
         print("  Detector            http://localhost:8080")
-        print("  cam-lobby (live)    http://localhost:8081   login admin / admin")
-        print("  cam-garage (live)   http://localhost:8082   login admin / admin")
+        print("  cam-lobby (live)    http://localhost:8081   login admin / admin  (clean)")
+        print("  cam-garage (live)   http://localhost:8082   login admin / admin  (clean until you infect it below)")
+        print("  cam-vault (live)    http://localhost:8083   login admin / admin  (ALREADY COMPROMISED)")
         print("\nSuggested demo: wait ~1 minute, click 'Freeze live capture as baseline' in the detector,")
         input("then press Enter here to infect cam-garage with the harmless simulator... ")
         trojan = spawn("trojan_sim/kworker_upd.py", DEVICE="cam-garage", C2_HOST="127.0.0.1", C2_PORT=4444, BEACON_INTERVAL=5,

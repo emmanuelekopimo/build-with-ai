@@ -5,6 +5,11 @@
     browser or VLC with no ffmpeg, Docker or physical camera. GET /snapshot.jpg returns a single frame.
   * realistic background flows (video to NVR, NTP, DNS, cloud heartbeat) appended to the shared flow log
 
+  * INFECTION OVERLAY: when the trojan simulator (trojan_sim/kworker_upd.py) is active for this device, it drops a marker
+    file; this camera watches that marker and swaps the normal scene for a glitched "compromised" view -- RGB channel
+    tearing, block corruption, and a scrolling feed of the simulator's own fake process/beacon activity. Purely cosmetic
+    (no code executes "inside" the stream); it just makes the already-real infection state on disk visible to a viewer.
+
 Env: DEVICE (name), PORT (default 80), FPS (default 8), COMMON_DIR (where flowlog.py lives).
 """
 import io
@@ -37,10 +42,28 @@ def _font(size):
 
 
 FONT_BIG, FONT_SMALL = _font(20), _font(14)
+FONT_MONO = _font(12)
+INFECTED_MARKER = os.path.join(flowlog.DATA_DIR, "infected", DEVICE)
+FAKE_PROC_LINES = [
+    "proc: kworker_upd  pid 418  cpu 97%",
+    "conn: 10.50.0.66:4444  ESTABLISHED",
+    "conn: 127.0.0.66:4444  ESTABLISHED",
+    "write: /tmp/.kworker-update",
+    "cron: * * * * * kworker  [persisted]",
+    "scan: 10.50.0.20-31:23  ...",
+    "scan: 127.0.0.20-31:23  ...",
+    "exfil: 198.51.100.77:443  8.5MB",
+    "beacon seq++  jitter 4%",
+    "warn: unauthorized process spawned",
+]
 
 
-def frame(i):
-    """One synthetic surveillance-style frame as JPEG bytes."""
+def _infected():
+    return os.path.exists(INFECTED_MARKER)
+
+
+def _scene(i):
+    """The normal, uncompromised scene: a figure walking down the alley."""
     img = Image.new("RGB", (W, H), (20, 27, 36))
     d = ImageDraw.Draw(img)
     for gx in range(0, W, 80):                          # floor/wall grid so motion is easy to see
@@ -56,7 +79,45 @@ def frame(i):
     for _ in range(40):                                 # sensor noise
         nx, ny = random.randrange(W), random.randrange(H)
         d.point((nx, ny), fill=(70, 80, 90))
-    d.text((12, 10), f"{DEVICE}  |  LIVE (simulated)", fill=(235, 235, 235), font=FONT_BIG)
+    return img
+
+
+def _glitch(img, i):
+    """Corrupt the scene to make an active infection visible: channel tearing, block noise, and a scrolling
+    readout of the trojan simulator's own fake activity (its process name, C2 beacons, scan and exfil events)."""
+    r, g, b = img.split()
+    dx = 6 + (i * 3) % 14
+    r = Image.eval(r.transform(r.size, Image.AFFINE, (1, 0, dx, 0, 1, 0)), lambda v: min(255, int(v * 1.15)))
+    b = b.transform(b.size, Image.AFFINE, (1, 0, -dx, 0, 1, 0))
+    img = Image.merge("RGB", (r, g, b))
+    d = ImageDraw.Draw(img)
+    for _ in range(10):                                  # torn/corrupted blocks
+        bx, by = random.randrange(W - 60), random.randrange(H - 20)
+        bw, bh = random.randrange(20, 60), random.randrange(4, 16)
+        shift = random.randrange(-25, 25)
+        block = img.crop((bx, by, bx + bw, by + bh))
+        d.rectangle([bx, by, bx + bw, by + bh], fill=(random.randrange(40, 90), 10, 10))
+        img.paste(block, (min(W - bw, max(0, bx + shift)), by))
+    for y in range(0, H, 3):                             # scanlines
+        d.line([0, y, W, y], fill=(0, 0, 0, 0) if y % 6 else (10, 10, 10))
+    overlay = Image.new("RGB", (W, H), (0, 0, 0))
+    od = ImageDraw.Draw(overlay)
+    od.rectangle([0, 0, W, H], outline=(200, 30, 30), width=4)
+    od.text((14, 32), "!! UNAUTHORIZED PROCESS ACTIVITY", fill=(255, 70, 70), font=FONT_BIG)
+    start = (i // 2) % len(FAKE_PROC_LINES)
+    for row, line in enumerate(FAKE_PROC_LINES[start:start + 6] + FAKE_PROC_LINES[:max(0, 6 - (len(FAKE_PROC_LINES) - start))]):
+        od.text((14, 60 + row * 15), line, fill=(120, 230, 150), font=FONT_MONO)
+    return Image.blend(img, overlay, 0.45 + 0.1 * ((i // FPS) % 2))
+
+
+def frame(i):
+    """One synthetic surveillance-style frame as JPEG bytes. Swaps to a glitch/compromise view while this
+    device's trojan simulator is active (see INFECTED_MARKER)."""
+    infected = _infected()
+    img = _glitch(_scene(i), i) if infected else _scene(i)
+    d = ImageDraw.Draw(img)
+    label = f"{DEVICE}  |  {'COMPROMISED' if infected else 'LIVE (simulated)'}"
+    d.text((12, 10), label, fill=(255, 90, 90) if infected else (235, 235, 235), font=FONT_BIG)
     d.text((12, H - 26), datetime.now().strftime("%Y-%m-%d  %H:%M:%S"), fill=(235, 235, 235), font=FONT_SMALL)
     if (i // FPS) % 2 == 0:                             # blinking REC light
         d.ellipse([W - 70, 12, W - 54, 28], fill=(220, 40, 50))
@@ -88,8 +149,9 @@ def mjpeg():
 def admin():
     if not _authorised():
         return _login()
+    badge = "<b style='color:#e85656'>⚠ COMPROMISED</b>" if _infected() else "<span style='color:#3a3'>clean</span>"
     return (f"<!doctype html><title>{DEVICE}</title><body style='font-family:sans-serif'><h1>{DEVICE}</h1>"
-            f"<p>Firmware 1.0.3 (simulated) &middot; live view below &middot; "
+            f"<p>Firmware 1.0.3 (simulated) &middot; status: {badge} &middot; live view below &middot; "
             f"<a href='/snapshot.jpg'>snapshot</a> &middot; stream: <code>/stream</code> (MJPEG)</p>"
             f"<img src='/stream' width='{W}' height='{H}' alt='live stream'></body>")
 
