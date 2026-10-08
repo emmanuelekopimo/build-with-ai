@@ -26,8 +26,8 @@
 @layer components {
   /* "Mono" token for tags and serials (D5). */
   .font-tag {
-    font-feature-settings: 'tnum' 1, 'zero' 0;
-    letter-spacing: 0.02em;
+    font-feature-settings: 'tnum' 1;
+    letter-spacing: 0;
   }
   .field-label {
     @apply mb-1.5 block text-xs font-semibold uppercase tracking-[0.06em] text-gray-600;

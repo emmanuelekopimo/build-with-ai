@@ -51,8 +51,8 @@ export function Sidebar({ onNavigate, onSignOut }: { onNavigate?: () => void; on
   if (!user) return null;
   return (
     <div className="flex h-full flex-col bg-white">
-      <div className="border-b-2 border-gray-100 px-6 pb-6 pt-6">
-        <img src="/logo.png" alt="ECEWS-ITAMS — IT Asset Management System" width={205} height={59} className="h-auto w-[190px]" />
+      <div className="border-b-2 border-gray-100 px-[22px] pb-6 pt-6">
+        <img src="/logo.png" alt="ECEWS-ITAMS — IT Asset Management System" width={205} height={59} className="h-auto w-[205px]" />
       </div>
       <nav aria-label="Main" className="flex-1 overflow-y-auto px-4 pt-5">
         {SECTIONS.map((section) => {
@@ -61,7 +61,7 @@ export function Sidebar({ onNavigate, onSignOut }: { onNavigate?: () => void; on
           return (
             <div key={section.title} className="mb-4">
               <div className="mb-2 px-3 text-2xs font-semibold uppercase tracking-[0.08em] text-gray-500">{section.title}</div>
-              <ul className="space-y-1">
+              <ul className="space-y-0.5">
                 {items.map((item) => {
                   const badge = item.badge === 'signoffs' ? counts.data?.signoffsAwaiting : undefined;
                   return (

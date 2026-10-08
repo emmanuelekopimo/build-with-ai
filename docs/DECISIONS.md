@@ -55,3 +55,6 @@ Each entry: the gap or conflict, the decision, and why. Numbered for reference f
 - **D37.** The send-for-signature modal uses the full variant (with deadline and signing method), since it carries information the brief requires.
 - **D38. Session**: 8 h idle timeout. The client warns 2 minutes before expiry and offers "Stay signed in"; drafts are server-side so nothing is lost.
 - **D39. Email domain warning:** non-`@ecews.org` addresses show an amber inline note but are allowed.
+- **D40. Registry page size 10.** The mockups show 5 rows per page as an illustration; 10 rows keeps the same layout while being practical. All pagination totals are computed.
+- **D41. Intake delivery location** is chosen from the Location list (it becomes the assets' current location), and the project from the Project list; the design shows them as plain fields.
+- **D42. New intakes are created on the first auto-save,** not on page open, so opening Form 1 never burns an IN-xxx reference. The bar reads "New draft not saved yet" until then.
