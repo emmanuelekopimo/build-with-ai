@@ -5,6 +5,9 @@ import { startJobs, stopJobs } from './jobs/scheduler';
 import { logger } from './lib/logger';
 import { closeBrowser } from './pdf/browser';
 
+// `node dist/server/index.js --production` works the same on Windows and Linux (no inline env syntax).
+if (process.argv.includes('--production')) process.env.NODE_ENV = 'production';
+
 function main() {
   let e;
   try {

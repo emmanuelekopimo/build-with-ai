@@ -63,7 +63,7 @@ export function IssuanceEditor({
 
   return (
     <>
-      <div className="card overflow-hidden rounded-md border-2 shadow-2">
+      <div className="card overflow-hidden rounded-md border-2 shadow-2" onBlur={(e) => ed.blurValidate(payload(), e)}>
         <FormSection>
           <SectionHeader n={1} title="Recipient - the person signing" hint="signature link goes to their email" />
           <StaffFields

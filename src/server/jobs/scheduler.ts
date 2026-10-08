@@ -6,19 +6,26 @@ import { JOBS } from './index';
 
 const tasks: ScheduledTask[] = [];
 
-/** Run a job under a Postgres advisory lock so multiple instances never double-run it. */
+/**
+ * Run a job under a transaction-scoped Postgres advisory lock so multiple instances never double-run it.
+ * The lock lives on one pinned connection for the job's duration, which also works behind
+ * transaction-mode poolers such as Neon's pgbouncer (session-level locks would not).
+ */
 export async function runLocked(name: string, fn: () => Promise<unknown>): Promise<boolean> {
   const key = [...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
-  const rows = await db().$queryRaw<Array<{ locked: boolean }>>`SELECT pg_try_advisory_lock(${key}) AS locked`;
-  if (!rows[0]?.locked) return false;
   try {
-    await fn();
-    return true;
+    return await db().$transaction(
+      async (tx) => {
+        const rows = await tx.$queryRaw<Array<{ locked: boolean }>>`SELECT pg_try_advisory_xact_lock(${key}) AS locked`;
+        if (!rows[0]?.locked) return false;
+        await fn();
+        return true;
+      },
+      { timeout: 10 * 60 * 1000, maxWait: 10000 },
+    );
   } catch (err) {
     logger().error({ job: name, err: (err as Error).message }, 'job failed');
     return false;
-  } finally {
-    await db().$queryRaw`SELECT pg_advisory_unlock(${key})`;
   }
 }
 

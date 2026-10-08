@@ -144,7 +144,7 @@ export async function listSignoffs(query: z.infer<typeof signoffQuery>) {
   const slice = keyed.slice((query.page - 1) * query.pageSize, query.page * query.pageSize);
   const formRows = await db().form.findMany({
     where: { id: { in: slice.filter((s) => s.kind === 'FORM').map((s) => s.id) } },
-    include: { assets: { orderBy: { position: 'asc' } }, parties: { orderBy: { order: 'asc' } } },
+    include: { assets: { orderBy: { position: 'asc' } }, parties: { orderBy: { order: 'asc' } }, childForms: { include: { parties: true } } },
   });
   const intakeRows = await db().intake.findMany({
     where: { id: { in: slice.filter((s) => s.kind === 'INTAKE').map((s) => s.id) } },
@@ -168,7 +168,10 @@ export async function listSignoffs(query: z.infer<typeof signoffQuery>) {
     }
     const f = formRows.find((x) => x.id === s.id)!;
     const first = f.assets[0] ? snapshotOf(f.assets[0]) : null;
-    const waitingOn = f.parties.filter((p) => p.needsSignature && p.status === 'PENDING').map((p) => p.name);
+    // A movement also waits on the signers of its generated indemnity.
+    const waitingOn = [...f.parties, ...f.childForms.flatMap((c) => c.parties)]
+      .filter((p) => p.needsSignature && p.status === 'PENDING')
+      .map((p) => p.name);
     return {
       kind: 'FORM' as const,
       id: f.id,

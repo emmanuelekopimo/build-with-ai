@@ -28,3 +28,15 @@ describe('format', () => {
     expect(scoreChecks([])).toEqual({ passed: 0, scorable: 7 });
   });
 });
+
+import { safeText } from '../../src/server/services/reports';
+
+describe('export safety', () => {
+  it('neutralises formula injection in exported text cells', () => {
+    expect(safeText('=HYPERLINK("http://evil")')).toBe(`'=HYPERLINK("http://evil")`);
+    expect(safeText('+234 803')).toBe(`'+234 803`);
+    expect(safeText('@cmd')).toBe(`'@cmd`);
+    expect(safeText('Samuel Etuk')).toBe('Samuel Etuk');
+    expect(safeText('-')).toBe('-');
+  });
+});

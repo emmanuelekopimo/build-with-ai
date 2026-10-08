@@ -116,7 +116,7 @@ export function ReturnEditor({
 
   return (
     <>
-      <div className="card overflow-hidden rounded-md border-2 shadow-2">
+      <div className="card overflow-hidden rounded-md border-2 shadow-2" onBlur={(e) => ed.blurValidate(payload(), e)}>
         <FormSection>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <SectionHeader n={1} title={d.returnerType === 'STAFF' ? 'Returning staff member' : 'Returning vendor'} hint={d.returnerType === 'STAFF' ? 'the person who had the equipment' : 'the vendor bringing repaired items back'} />
@@ -196,7 +196,7 @@ export function ReturnEditor({
                   right={
                     <Select
                       aria-label={`Condition of ${a.tag}`}
-                      className="h-12 w-[160px]"
+                      className="h-12 w-[190px]"
                       value={d.conditions[a.tag] ?? ''}
                       invalid={!!ed.errors[`condition.${a.tag}`]}
                       placeholder="Choose condition"

@@ -121,7 +121,14 @@ export const remindBody = z.object({ formIds: z.array(z.string().uuid()).min(1, 
 
 export async function bulkRemind(formIds: string[], user: SessionUser) {
   const results: Array<{ id: string; reference?: string; ok: boolean; error?: string }> = [];
+  // A movement's resend already covers its generated indemnity — never email the same signer twice.
+  const parents = new Map((await db().form.findMany({ where: { id: { in: formIds } }, select: { id: true, parentFormId: true, reference: true } })).map((f) => [f.id, f]));
   for (const id of formIds) {
+    const f = parents.get(id);
+    if (f?.parentFormId && formIds.includes(f.parentFormId)) {
+      results.push({ id, reference: f.reference, ok: true });
+      continue;
+    }
     try {
       const r = await resendForm(id, user);
       results.push({ id, reference: r.reference, ok: !r.emailWarning, error: r.emailWarning ?? undefined });

@@ -5,6 +5,7 @@ import { formsRouter } from './forms';
 import { intakesRouter } from './intakes';
 import { publicRouter } from './public';
 import { reportsRouter } from './reports';
+import { usersRouter } from './users';
 import { metaRouter } from './meta';
 import { notificationsRouter } from './notifications';
 
@@ -18,4 +19,5 @@ apiRouter.use('/', assetsRouter);
 apiRouter.use('/', intakesRouter);
 apiRouter.use('/', formsRouter);
 apiRouter.use('/', reportsRouter);
+apiRouter.use('/', usersRouter);
 apiRouter.use('/public', publicRouter);

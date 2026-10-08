@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type FocusEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { strictSchema, type NewFormType } from '../../../shared/formSchemas';
@@ -125,5 +125,23 @@ export function useFormEditor(type: NewFormType, initial: { id: string; referenc
     [type, saved, navigate, returnTo, toast, showErrors],
   );
 
-  return { saved, errors, setErrors, busy, validate, save, send, showErrors };
+  /** Inline validation on blur: validates the whole payload but only updates the field that lost focus. */
+  const blurValidate = useCallback(
+    (data: unknown, e: FocusEvent<HTMLElement>) => {
+      const id = (e.target as HTMLElement).id;
+      if (!id?.startsWith('f-')) return;
+      const key = id.slice(2).replace(/-/g, '.');
+      const r = strictSchema(type).safeParse(data);
+      const issue = r.success ? undefined : r.error.issues.find((i) => i.path.join('.') === key);
+      setErrors((prev) => {
+        const next = { ...prev };
+        if (issue) next[key] = issue.message;
+        else delete next[key];
+        return next;
+      });
+    },
+    [type],
+  );
+
+  return { saved, errors, setErrors, busy, validate, save, send, showErrors, blurValidate };
 }

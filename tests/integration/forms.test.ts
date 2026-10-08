@@ -442,3 +442,31 @@ describe('sign-offs and registries', () => {
     expect(copy.body.sentTo.length).toBe(2);
   });
 });
+
+describe('bulk reminders with a movement and its indemnity', () => {
+  it('reminds each signer once and reports what the movement waits on', async () => {
+    const s = await login();
+    const [tag] = await intakeAssets(s, [{}]);
+    await issue(s, [tag!]);
+    await sign(STAFF.samuel.email, STAFF.samuel.name);
+    const approvers = { cto: { email: 'cto@ecews.org' }, admin: { email: 'admin.officer@ecews.org' } };
+    const m = await s.post('/api/forms', {
+      type: 'MOVEMENT',
+      assetTags: [tag],
+      data: { to: { type: 'STAFF', person: STAFF.ima, location: 'Uyo HQ' }, reason: 'Reassignment to Programs', responsibleOfficer: 'Edidiong Okon', movementDate: '2026-08-14', approvers },
+      send: true,
+    });
+    await pub().post(`/api/public/approve/${lastLink('cto@ecews.org', 'approve')}`).send({ decision: 'APPROVE' });
+    await pub().post(`/api/public/approve/${lastLink('admin.officer@ecews.org', 'approve')}`).send({ decision: 'APPROVE' });
+    await sign(STAFF.samuel.email, STAFF.samuel.name, 2);
+    const ind = await db().form.findFirstOrThrow({ where: { parentFormId: m.body.id } });
+    const list = await s.get('/api/signoffs?tab=AWAITING&pageSize=100');
+    const row = list.body.items.find((r: { id: string }) => r.id === m.body.id);
+    expect(row.status).toBe('PARTIAL');
+    expect(row.waitingOn).toEqual(['Ima Ubong']);
+    const before = getOutbox().filter((x) => x.to === STAFF.ima.email).length;
+    const r = await s.post('/api/forms/remind', { formIds: [m.body.id, ind.id] });
+    expect(r.status).toBe(200);
+    expect(getOutbox().filter((x) => x.to === STAFF.ima.email).length).toBe(before + 1);
+  });
+});

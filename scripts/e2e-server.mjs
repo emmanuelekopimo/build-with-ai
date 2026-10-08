@@ -23,7 +23,7 @@ rmSync('var/e2e-mail', { recursive: true, force: true });
 execSync('npx prisma migrate deploy', { env, stdio: 'inherit' });
 execSync('npx tsx scripts/clear-db.ts', { env, stdio: 'inherit' });
 execSync('npx tsx prisma/seed.ts', { env, stdio: 'inherit' });
-const child = spawn('node', ['dist/server/index.js'], { env, stdio: 'inherit' });
+const child = spawn('node', ['dist/server/index.js', '--production'], { env, stdio: 'inherit' });
 process.on('SIGTERM', () => child.kill('SIGTERM'));
 process.on('SIGINT', () => child.kill('SIGINT'));
 child.on('exit', (code) => process.exit(code ?? 0));

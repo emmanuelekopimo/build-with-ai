@@ -394,6 +394,11 @@ export function exportFileName(base: string, format: 'pdf' | 'xlsx' | 'csv'): st
   return `ECEWS-ITAMS-${base.replace(/[^A-Za-z0-9_-]+/g, '-')}_${isoDateWAT(clockNow())}.${format}`;
 }
 
+/** Neutralise spreadsheet formula injection in user-entered text (OWASP CSV injection). */
+export function safeText(v: string): string {
+  return /^[=+\-@\t\r]./.test(v) ? `'${v}` : v;
+}
+
 function cellText(v: Row[string], type: ColType = 'string'): string {
   if (v === null || v === undefined) return '';
   if (type === 'date') return fmtDate(v as Date);
@@ -429,8 +434,8 @@ export async function writeReport(res: Response, report: ReportData, format: 'pd
       }
       for (const r of batch) {
         const out: Record<string, string> = {};
-        for (const c of report.columns) out[c.key] = c.type === 'money' || c.type === 'number' ? (r[c.key] === null ? '' : String(r[c.key])) : c.type === 'date' || c.type === 'datetime' ? (r[c.key] ? isoDateWAT(r[c.key] as Date) : '') : cellText(r[c.key]);
-        if (histories) out.__history = histories.get(String(r.tag)) ?? '';
+        for (const c of report.columns) out[c.key] = c.type === 'money' || c.type === 'number' ? (r[c.key] === null ? '' : String(r[c.key])) : c.type === 'date' || c.type === 'datetime' ? (r[c.key] ? isoDateWAT(r[c.key] as Date) : '') : safeText(cellText(r[c.key]));
+        if (histories) out.__history = safeText(histories.get(String(r.tag)) ?? '');
         if (!csv.write(out)) await new Promise((resolve) => csv.once('drain', resolve));
       }
     }
@@ -466,7 +471,7 @@ export async function writeReport(res: Response, report: ReportData, format: 'pd
           for (const c of cols) {
             const v = r[c.key];
             // Dates are written as real Excel dates, shifted to WAT wall-clock time.
-            values[c.key] = v instanceof Date ? new Date(v.getTime() + 3600000) : v;
+            values[c.key] = v instanceof Date ? new Date(v.getTime() + 3600000) : typeof v === 'string' ? safeText(v) : v;
           }
           ws.addRow(values).commit();
         }

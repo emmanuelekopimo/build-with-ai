@@ -150,7 +150,7 @@ export function MovementEditor({
           you leave without sending, nothing changes.
         </InfoNote>
       ) : null}
-      <div className="card overflow-hidden rounded-md border-2 shadow-2">
+      <div className="card overflow-hidden rounded-md border-2 shadow-2" onBlur={(e) => ed.blurValidate(payload(), e)}>
         <FormSection>
           <SectionHeader n={1} title="Transfer details" hint="who is giving up the equipment and who is receiving it" />
           <div className="mb-4">

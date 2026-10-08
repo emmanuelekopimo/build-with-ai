@@ -115,12 +115,13 @@ Key constraints: `Asset.tag` unique (from sequence `asset_tag_seq`), `(make, ser
 ## 6. API (all JSON, Zod-validated; `/api` prefix)
 
 Auth: `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `POST /auth/forgot`, `POST /auth/reset`.
-Meta: `GET /meta` (categories, projects, locations), `GET /people?q=&type=` (typeahead), `GET|POST|PATCH /users` (IT_ADMIN).
+Meta: `GET /meta` (categories, projects, locations), `GET /people?q=&type=` (typeahead), `GET /nav-counts`, `GET|POST /users`, `PATCH /users/:id` (IT_ADMIN).
 Assets: `GET /assets`, `GET /assets/:tag`, `POST /assets/:tag/report-damage`, `POST /assets/:tag/retire`, `POST /assets/:tag/delete`, `GET /assets/:tag/report`.
 Intake: `POST /intakes`, `GET /intakes/:id`, `PATCH /intakes/:id`, `DELETE /intakes/:id`, `POST /intakes/:id/validate`, `GET /intakes/tag-preview`.
-Forms: `POST /forms` (create draft or create+send, `Idempotency-Key` header), `GET /forms/:id`, `PATCH /forms/:id`, `DELETE /forms/:id` (discard draft), `POST /forms/:id/send`, `POST /forms/:id/cancel`, `POST /forms/:id/resend`, `POST /forms/remind` (bulk), `GET /forms/:id/pdf`, `POST /forms/:id/email-copy`, `GET /forms/by-ref/:reference`.
+Forms: `POST /forms` (create draft or create+send, `Idempotency-Key` header), `GET /forms/:id`, `PATCH /forms/:id`, `DELETE /forms/:id` (discard draft), `POST /forms/:id/send`, `POST /forms/:id/cancel`, `POST /forms/:id/resend`, `POST /forms/remind` (bulk), `GET /forms/:id/document` (HTML), `GET /forms/:id/pdf`, `POST /forms/:id/email-copy`, `GET /forms/by-ref/:reference`.
 Lists: `GET /registries/:type`, `GET /signoffs`, `GET /signoffs/summary`, `GET /dashboard`, `GET /notifications`, `POST /notifications/read-all`.
-Reports: `GET /reports/summary`, `GET /reports/:report/export?format=...&filters`.
+Reports: `GET /dashboard`, `GET /reports/summary`, `GET /reports/:report/count`, `GET /reports/:report/export?format=...&filters`, `GET /assets/:tag/report?format=&timeline=&intake=`.
+Notifications: `GET /notifications`, `POST /notifications/read-all`, `POST /notifications/:id/read`.
 Public (no session, rate-limited, noindex): `GET|POST /public/sign/:token`, `GET|POST /public/approve/:token`.
 Health: `GET /health`.
 

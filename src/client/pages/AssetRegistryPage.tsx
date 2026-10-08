@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, Box, Plus, SlidersHorizontal, Tag } from 'lucide-react';
+import { ArrowDown, ArrowUp, Box, Plus, SlidersHorizontal, Tag, Wrench } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AssetStatusCell, HolderCell } from '../components/assets/AssetBits';
@@ -134,6 +134,18 @@ export function AssetRegistryPage() {
           <FilterSelect label="Status" icon={Box} options={statusOptions} value={f.status} onChange={(v) => set({ status: v })} />
           <FilterSelect label="Project" icon={Tag} options={projects} value={f.project} onChange={(v) => set({ project: v })} />
           <DateRangeFilter label="Added" value={{ from: f.from, to: f.to }} onChange={(r) => set({ from: r.from, to: r.to })} />
+          <button
+            type="button"
+            aria-pressed={f.status === 'IN_REPAIR'}
+            onClick={() => set({ status: f.status === 'IN_REPAIR' ? null : 'IN_REPAIR' })}
+            className={cn(
+              'inline-flex h-9 items-center gap-1.5 rounded-pill border-2 px-4 text-md font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+              f.status === 'IN_REPAIR' ? 'border-amber bg-amber-light text-amber' : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-50',
+            )}
+          >
+            <Wrench className="h-4 w-4" aria-hidden />
+            In repair
+          </button>
         </div>
         <div className="mt-3 flex min-h-[28px] flex-wrap items-center gap-2">
           {chips.map((c) => (

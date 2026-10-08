@@ -150,7 +150,7 @@ export function AssetPicker({
         </p>
         <div className="overflow-hidden rounded-md border-2 border-gray-200">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px]">
+            <table className="w-full min-w-[600px] [&_td]:px-3 [&_th]:px-3">
               <caption className="sr-only">Assets you can add</caption>
               <thead className="border-b-2 border-gray-200 bg-gray-50">
                 <tr>
