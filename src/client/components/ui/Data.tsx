@@ -26,6 +26,7 @@ export function DataTable<T>({
   caption,
   rowClassName,
   highlightKey,
+  minWidth = 720,
 }: {
   columns: Column<T>[];
   rows: T[] | undefined;
@@ -38,12 +39,14 @@ export function DataTable<T>({
   caption: string;
   rowClassName?: (row: T) => string | undefined;
   highlightKey?: string | null;
+  /** Minimum table width before horizontal scrolling kicks in. */
+  minWidth?: number;
 }) {
   const alignCls = (a?: 'left' | 'right' | 'center') => (a === 'right' ? 'text-right' : a === 'center' ? 'text-center' : '');
   return (
     <div className="overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse">
+        <table className="w-full border-collapse" style={{ minWidth }}>
           <caption className="sr-only">{caption}</caption>
           <thead className="border-y-2 border-gray-200 bg-gray-50">
             <tr>

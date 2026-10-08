@@ -63,3 +63,7 @@ Each entry: the gap or conflict, the decision, and why. Numbered for reference f
 - **D45. Vendor custody.** While at a vendor for repair, the vendor contact is the asset's holder; the asset's Location is unchanged (the vendor is not a Location). The timeline shows the vendor as the destination.
 - **D46. Location names.** Seeded locations follow the forms ("Uyo HQ Store", "Ikot Ekpene office"), so ECEWS-IT-0001's move reads "Uyo HQ Store → Ikot Ekpene office" where AB-06 shows the shortened "Uyo HQ → Ikot Ekpene".
 - **D47. Auto-reminders issue a fresh link** (tokens are stored only as hashes, so the original link cannot be re-sent) but keep the original expiry; manual Resend/Remind extends the window by 7 days.
+- **D48. "Awaiting parts"** on the Under Repair KPI counts in-repair assets still at the vendor after their expected return date (the system has no parts tracking; an overdue vendor return is the closest real signal).
+- **D49. Export filters default to "All".** The design shows example dates in the filter fields; pre-filling them would silently exclude records, so they start empty and the modal subtitle shows the live count for the current filters.
+- **D50. PDF exports are rendered in one pass** (Chromium needs the full HTML); CSV and Excel stream in batches of 500 rows.
+- **D51. Dashboard for viewers** omits Recent Actions (recipient names) and Quick actions; KPIs, Needs Attention and Assets by project remain.

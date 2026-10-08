@@ -25,7 +25,7 @@ export function getBrowser(): Promise<Browser> {
   return browserPromise;
 }
 
-export async function htmlToPdf(html: string, opts: { landscape?: boolean } = {}): Promise<Buffer> {
+export async function htmlToPdf(html: string, opts: { landscape?: boolean; footer?: string } = {}): Promise<Buffer> {
   const browser = await getBrowser();
   const context = await browser.newContext();
   try {
@@ -35,8 +35,13 @@ export async function htmlToPdf(html: string, opts: { landscape?: boolean } = {}
       format: 'A4',
       landscape: opts.landscape ?? false,
       printBackground: true,
-      margin: { top: '0', bottom: '0', left: '0', right: '0' },
-      preferCSSPageSize: true,
+      margin: opts.footer ? { top: '16mm', bottom: '18mm', left: '12mm', right: '12mm' } : { top: '0', bottom: '0', left: '0', right: '0' },
+      preferCSSPageSize: !opts.footer,
+      displayHeaderFooter: Boolean(opts.footer),
+      headerTemplate: '<span></span>',
+      footerTemplate: opts.footer
+        ? `<div style="font-family:Arial,sans-serif;font-size:8px;color:#9CA3AF;width:100%;padding:0 12mm;display:flex;justify-content:space-between"><span>ECEWS ITAMS · ${opts.footer.replace(/[<>&]/g, '')}</span><span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>`
+        : '<span></span>',
     });
     return Buffer.from(pdf);
   } finally {

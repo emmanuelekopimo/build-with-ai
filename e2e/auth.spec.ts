@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ADMIN, linkFromMail, login, mails } from './helpers';
+import { ADMIN, linkFromMail, login, mails, SUPPORT } from './helpers';
 
 test('login shows errors inline and signs in', async ({ page }) => {
   await page.goto('/login');
@@ -36,9 +36,10 @@ test('forgot password sends a working reset link', async ({ page }) => {
     return link;
   }).not.toBeNull();
   await page.goto(link!);
-  await page.getByLabel('New password').fill('Fresh-password-2026');
-  await page.getByLabel('Repeat password').fill('Fresh-password-2026');
+  // Reset to the seeded password so later specs can still sign in as IT Support.
+  await page.getByLabel('New password').fill(SUPPORT.password);
+  await page.getByLabel('Repeat password').fill(SUPPORT.password);
   await page.getByRole('button', { name: 'Update password' }).click();
   await expect(page.getByText('Password updated')).toBeVisible();
-  await login(page, { email: 'uwem.ekanem@ecews.org', password: 'Fresh-password-2026' });
+  await login(page, SUPPORT);
 });

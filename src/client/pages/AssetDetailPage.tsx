@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
+  FileText,
   Calendar,
   Info,
   Lock,
@@ -29,6 +30,8 @@ import { categoryIcon } from '../lib/icons';
 import { errorMessage } from '../lib/query';
 import type { AssetDetail } from '../lib/types';
 import { REGISTRY_RETURN_KEY } from './AssetRegistryPage';
+import { GenerateReportModal } from '../components/reports/ExportModals';
+import { useAuth } from '../lib/auth';
 
 const ACTION_ICON: Record<AssetAction, ReactNode> = {
   ISSUE: <Send className="h-4 w-4" />,
@@ -59,7 +62,8 @@ function registryBack() {
 export function AssetDetailPage() {
   const { tag = '' } = useParams();
   const navigate = useNavigate();
-  const [modal, setModal] = useState<null | 'damage' | 'retire' | 'repair' | 'delete'>(null);
+  const { can } = useAuth();
+  const [modal, setModal] = useState<null | 'damage' | 'retire' | 'repair' | 'delete' | 'report'>(null);
   const query = useQuery({ queryKey: ['asset', tag], queryFn: () => api<AssetDetail>(`/assets/${tag}`) });
   const back = { to: registryBack(), label: 'Asset Registry' };
 
@@ -161,6 +165,11 @@ export function AssetDetailPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3 self-center">
+            {can('report.exportSingle') && !a.deletedAt ? (
+              <Button variant="outline" size="sm" icon={<FileText className="h-4 w-4" />} onClick={() => setModal('report')}>
+                Generate report
+              </Button>
+            ) : null}
             {d.actions.map((act) => {
               const btn = (
                 <Button
@@ -260,6 +269,7 @@ export function AssetDetailPage() {
       <ReportDamageModal asset={a} open={modal === 'damage'} onOpenChange={(o) => setModal(o ? 'damage' : null)} />
       {modal === 'retire' ? <RetireModal asset={a} open onOpenChange={(o) => setModal(o ? 'retire' : null)} /> : null}
       <RepairModal asset={a} open={modal === 'repair'} onOpenChange={(o) => setModal(o ? 'repair' : null)} />
+      {modal === 'report' ? <GenerateReportModal asset={a} open onOpenChange={(o) => setModal(o ? 'report' : null)} /> : null}
       {modal === 'delete' ? <DeleteModal asset={a} open onOpenChange={(o) => setModal(o ? 'delete' : null)} /> : null}
     </>
   );

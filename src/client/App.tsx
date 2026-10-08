@@ -10,7 +10,9 @@ import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { RequirePermission } from './components/layout/RequirePermission';
+import { DashboardPage } from './pages/DashboardPage';
 import { DocumentPage } from './pages/DocumentPage';
+import { ReportsPage } from './pages/ReportsPage';
 import { FormEditorPage } from './pages/FormEditorPage';
 import { FormsRegistryPage } from './pages/FormsRegistryPage';
 import { SignoffsPage } from './pages/SignoffsPage';
@@ -36,6 +38,8 @@ const guard = (perm: Parameters<typeof RequirePermission>[0]['perm'], el: ReactN
 );
 
 const appRoutes: RouteObject[] = [
+  { path: '/', element: guard('dashboard.view', <DashboardPage />) },
+  { path: '/reports', element: guard('report.view', <ReportsPage />) },
   { path: '/assets', element: guard('asset.view', <AssetRegistryPage />) },
   { path: '/assets/:tag', element: guard('asset.view', <AssetDetailPage />) },
   { path: '/intake/:id?', element: guard('intake.manage', <IntakePage />) },

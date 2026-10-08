@@ -473,6 +473,8 @@ async function main() {
   await expireLinksJob();
   await expiringSoonJob();
   await overdueJob();
+  // Treat notifications older than two days as already seen, so the bell shows what is new.
+  await prisma.notification.updateMany({ where: { createdAt: { lt: new Date(Date.now() - 2 * 86400000) } }, data: { readAt: new Date() } });
 
   const [assets, forms, events] = await Promise.all([prisma.asset.count(), prisma.form.count(), prisma.custodyEvent.count()]);
   const byStatus = await prisma.asset.groupBy({ by: ['status'], _count: true });
