@@ -1,0 +1,54 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-gray-50 font-sans text-base text-gray-900;
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--green-brand));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* "Mono" token for tags and serials (D5). */
+  .font-tag {
+    font-feature-settings: 'tnum' 1, 'zero' 0;
+    letter-spacing: 0.02em;
+  }
+  .field-label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-[0.06em] text-gray-600;
+  }
+  .input {
+    @apply h-9 w-full rounded-sm border border-gray-200 bg-gray-50 px-3.5 text-md text-gray-900 placeholder:text-gray-400
+      focus:border-brand focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed disabled:text-gray-500;
+  }
+  .input-error {
+    @apply border-red focus:border-red focus:ring-red/15;
+  }
+  .card {
+    @apply rounded-md border border-gray-200 bg-white shadow-1;
+  }
+  .th {
+    @apply whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.06em] text-gray-600;
+  }
+  .td {
+    @apply px-4 py-3 align-middle text-md text-gray-800;
+  }
+  .skeleton {
+    @apply animate-shimmer rounded bg-gray-200;
+  }
+}

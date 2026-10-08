@@ -1,0 +1,493 @@
+// ECEWS-ITAMS data model. See docs/SPEC.md §5 and docs/DECISIONS.md.
+// Raw-SQL extras (sequences, partial unique indexes, CHECK constraints,
+// custody-event immutability trigger) live in the migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  IT_ADMIN
+  IT_SUPPORT
+  VIEWER
+}
+
+enum AssetStatus {
+  IN_STORE
+  ISSUED
+  DAMAGED
+  RETIRED
+}
+
+enum DamageOrigin {
+  REPORTED
+  RETURNED
+  INTAKE_FAILURE
+}
+
+enum Condition {
+  GOOD
+  FAIR
+  POOR
+  DAMAGED
+}
+
+enum IntakeStatus {
+  DRAFT
+  VALIDATED
+}
+
+enum CheckAnswer {
+  YES
+  NO
+  NA
+}
+
+enum LineResult {
+  PASSED
+  FAILED
+}
+
+enum FormType {
+  ISSUANCE
+  RETURN
+  MOVEMENT
+  INDEMNITY
+}
+
+enum FormStatus {
+  DRAFT
+  PENDING_APPROVAL
+  AWAITING
+  PARTIAL
+  SIGNED
+  EXPIRED
+  REJECTED
+  CANCELLED
+}
+
+enum PartyRole {
+  RECIPIENT
+  ISSUER
+  RETURNER
+  RECEIVER
+  HANDOVER
+  COUNTERPARTY
+}
+
+enum PartyStatus {
+  PENDING
+  SIGNED
+  RECORDED
+}
+
+enum ApproverRole {
+  CTO
+  ADMIN_OFFICER
+}
+
+enum ApprovalStatus {
+  WAITING
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PersonType {
+  STAFF
+  VENDOR
+}
+
+enum EndpointType {
+  STAFF
+  LOCATION
+  VENDOR
+}
+
+enum RetireReason {
+  BEYOND_ECONOMIC_REPAIR
+  LOST_OR_STOLEN
+  OBSOLETE
+  REJECTED_AT_INTAKE
+  OTHER
+}
+
+enum CustodyEventType {
+  INTAKE_VALIDATED
+  INTAKE_FAILED
+  ISSUED
+  REISSUED
+  MOVED
+  RETURNED
+  DAMAGE_REPORTED
+  SENT_FOR_REPAIR
+  REPAIRED
+  REPAIR_FAILED
+  RETIRED
+  REINSTATED_FOR_REPAIR
+  DELETED
+}
+
+enum NotificationKind {
+  OVERDUE_RETURN
+  LINK_EXPIRING
+  SIGNED
+  EXPIRED
+  APPROVED
+  REJECTED
+  DAMAGE
+  INFO
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  title        String // e.g. "IT Admin"
+  office       String // e.g. "Uyo"
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions       Session[]
+  passwordResets PasswordReset[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+  formsCreated   Form[]          @relation("FormCreatedBy")
+  intakesCreated Intake[]
+}
+
+model Session {
+  id         String   @id @default(uuid()) @db.Uuid
+  tokenHash  String   @unique
+  csrfToken  String
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  expiresAt  DateTime
+  ipAddress  String?
+  userAgent  String?
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordReset {
+  id        String    @id @default(uuid()) @db.Uuid
+  tokenHash String    @unique
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Project {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String // "Field project", "Internal", ...
+  assets      Asset[]
+  intakes     Intake[]
+}
+
+model Location {
+  id      String  @id @default(uuid()) @db.Uuid
+  name    String  @unique
+  isStore Boolean @default(false)
+  assets  Asset[]
+}
+
+model Category {
+  id             String           @id @default(uuid()) @db.Uuid
+  name           String           @unique
+  group          String // registry picker chips: Laptops, Monitors, Phones, Accessories, Other
+  icon           String           @default("laptop")
+  requiresSerial Boolean          @default(true)
+  description    String           @default("") // default asset description, e.g. "Business Laptop"
+  assets         Asset[]
+  lineItems      IntakeLineItem[]
+}
+
+model Person {
+  id         String     @id @default(uuid()) @db.Uuid
+  type       PersonType
+  name       String
+  email      String     @unique
+  department String?
+  position   String?
+  staffId    String?
+  phone      String?
+  company    String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  holding    Asset[]
+
+  @@index([name])
+}
+
+model Asset {
+  id               String        @id @default(uuid()) @db.Uuid
+  tag              String        @unique
+  tagNumber        Int           @unique
+  categoryId       String        @db.Uuid
+  category         Category      @relation(fields: [categoryId], references: [id])
+  description      String
+  makeModel        String
+  serial           String?
+  status           AssetStatus
+  damageOrigin     DamageOrigin?
+  damagedAt        DateTime?
+  condition        Condition     @default(GOOD)
+  projectId        String        @db.Uuid
+  project          Project       @relation(fields: [projectId], references: [id])
+  locationId       String        @db.Uuid
+  location         Location      @relation(fields: [locationId], references: [id])
+  currentHolderId  String?       @db.Uuid
+  currentHolder    Person?       @relation(fields: [currentHolderId], references: [id])
+  currentFormId    String?       @db.Uuid // the signed issuance/indemnity that governs current custody
+  repairFormId     String?       @db.Uuid // open repair movement => inRepair
+  intakeLineItemId String?       @unique @db.Uuid
+  intakeLineItem   IntakeLineItem? @relation(fields: [intakeLineItemId], references: [id])
+  oemSupport       Boolean       @default(false)
+  unitCost         Decimal?      @db.Decimal(14, 2)
+  notes            String?
+  retireReason     RetireReason?
+  retiredAt        DateTime?
+  deletedAt        DateTime?
+  deletedById      String?       @db.Uuid
+  deleteReason     String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  formAssets    FormAsset[]
+  custodyEvents CustodyEvent[]
+
+  @@index([status])
+  @@index([projectId])
+  @@index([locationId])
+  @@index([categoryId])
+  @@index([currentHolderId])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model Intake {
+  id                String         @id @default(uuid()) @db.Uuid
+  reference         String         @unique
+  status            IntakeStatus   @default(DRAFT)
+  supplier          String         @default("")
+  poReference       String         @default("")
+  projectId         String?        @db.Uuid
+  project           Project?       @relation(fields: [projectId], references: [id])
+  deliveryLocation  String         @default("")
+  deliveryDate      DateTime?      @db.Date
+  validatedByName   String         @default("")
+  validatedByTitle  String         @default("")
+  validatedDate     DateTime?      @db.Date
+  validatedAt       DateTime?
+  createdById       String         @db.Uuid
+  createdBy         User           @relation(fields: [createdById], references: [id])
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  lineItems         IntakeLineItem[]
+  checks            IntakeCheck[]
+}
+
+model IntakeLineItem {
+  id         String     @id @default(uuid()) @db.Uuid
+  intakeId   String     @db.Uuid
+  intake     Intake     @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+  position   Int
+  categoryId String     @db.Uuid
+  category   Category   @relation(fields: [categoryId], references: [id])
+  makeModel  String
+  serial     String?
+  notes      String?
+  result     LineResult @default(PASSED)
+  unitCost   Decimal?   @db.Decimal(14, 2)
+  asset      Asset?
+
+  @@index([intakeId])
+}
+
+model IntakeCheck {
+  id       String       @id @default(uuid()) @db.Uuid
+  intakeId String       @db.Uuid
+  intake   Intake       @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+  question Int // 1..7, wording in src/shared/constants.ts
+  answer   CheckAnswer?
+  remark   String?
+
+  @@unique([intakeId, question])
+}
+
+model Form {
+  id              String        @id @default(uuid()) @db.Uuid
+  type            FormType
+  reference       String        @unique // assigned at creation; drafts get one too (gap-tolerant)
+  status          FormStatus    @default(DRAFT)
+  createdById     String        @db.Uuid
+  createdBy       User          @relation("FormCreatedBy", fields: [createdById], references: [id])
+  parentFormId    String?       @db.Uuid
+  parentForm      Form?         @relation("FormChildren", fields: [parentFormId], references: [id])
+  childForms      Form[]        @relation("FormChildren")
+  // Free-form details captured by the form (recipient/returner/endpoints etc.), validated by Zod.
+  data            Json
+  temporary       Boolean       @default(false)
+  expectedReturn  DateTime?     @db.Date
+  sentAt          DateTime?
+  deadline        DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  rejectedReason  String?
+  idempotencyKey  String?       @unique
+  overdueNotifiedAt DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  assets        FormAsset[]
+  parties       Party[]
+  approvals     Approval[]
+  document      FormDocument?
+  custodyEvents CustodyEvent[]
+
+  @@index([type, status])
+  @@index([status])
+  @@index([sentAt])
+}
+
+model FormAsset {
+  id              String       @id @default(uuid()) @db.Uuid
+  formId          String       @db.Uuid
+  form            Form         @relation(fields: [formId], references: [id], onDelete: Cascade)
+  assetId         String       @db.Uuid
+  asset           Asset        @relation(fields: [assetId], references: [id])
+  position        Int          @default(0)
+  active          Boolean      @default(false) // see D13: partial unique index on (assetId) WHERE active
+  condition       Condition?   // return assessment
+  resultingStatus AssetStatus?
+  // snapshot so signed documents never change after the fact
+  snapshot        Json
+
+  @@unique([formId, assetId])
+  @@index([assetId])
+}
+
+model Party {
+  id             String      @id @default(uuid()) @db.Uuid
+  formId         String      @db.Uuid
+  form           Form        @relation(fields: [formId], references: [id], onDelete: Cascade)
+  role           PartyRole
+  name           String
+  email          String?
+  department     String?
+  position       String?
+  needsSignature Boolean     @default(true)
+  status         PartyStatus @default(PENDING)
+  tokenHash      String?     @unique
+  tokenIssuedAt  DateTime?
+  tokenExpiresAt DateTime?
+  usedAt         DateTime?
+  reminderSentAt DateTime?
+  expiryWarnedAt DateTime?
+  signedAt       DateTime?
+  typedName      String?
+  signerDepartmentRole String?
+  ipAddress      String?
+  userAgent      String?
+  userId         String?     @db.Uuid // IT user for ISSUER / RECEIVER parties
+  order          Int         @default(0)
+
+  @@index([formId])
+}
+
+model Approval {
+  id             String         @id @default(uuid()) @db.Uuid
+  formId         String         @db.Uuid
+  form           Form           @relation(fields: [formId], references: [id], onDelete: Cascade)
+  role           ApproverRole
+  name           String?
+  email          String
+  order          Int
+  status         ApprovalStatus @default(WAITING)
+  tokenHash      String?        @unique
+  tokenExpiresAt DateTime?
+  sentAt         DateTime?
+  decidedAt      DateTime?
+  comment        String?
+  ipAddress      String?
+  userAgent      String?
+
+  @@unique([formId, role])
+}
+
+model FormDocument {
+  id          String   @id @default(uuid()) @db.Uuid
+  formId      String   @unique @db.Uuid
+  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  pdf         Bytes
+  sha256      String
+  generatedAt DateTime @default(now())
+}
+
+model CustodyEvent {
+  id            String           @id @default(uuid()) @db.Uuid
+  assetId       String           @db.Uuid
+  asset         Asset            @relation(fields: [assetId], references: [id])
+  type          CustodyEventType
+  occurredAt    DateTime         @default(now())
+  actorUserId   String?          @db.Uuid
+  actorName     String
+  fromHolder    String?
+  toHolder      String?
+  fromLocation  String?
+  toLocation    String?
+  formId        String?          @db.Uuid
+  form          Form?            @relation(fields: [formId], references: [id])
+  formReference String?
+  statusAfter   AssetStatus
+  detail        Json             @default("{}")
+
+  @@index([assetId, occurredAt])
+  @@index([type])
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      NotificationKind
+  // Rich text segments: [{t:"text"}|{b:"bold"}]; link is a client route
+  message   Json
+  link      String?
+  dedupeKey String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, readAt])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @db.Uuid
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  entityType String?
+  entityId   String?
+  detail     Json     @default("{}")
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+}

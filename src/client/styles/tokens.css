@@ -1,0 +1,31 @@
+/* Design tokens read from design/components.png (hex labels, confirmed by pixel sampling).
+   Stored as RGB triplets so Tailwind can apply opacity. */
+:root {
+  --green-brand: 9 109 73; /* #096D49 */
+  --green-hover: 7 82 55; /* #075237 */
+  --green-200: 165 214 167; /* #A5D6A7 */
+  --green-100: 232 245 233; /* #E8F5E9 */
+  --green-soft: 209 250 229; /* #D1FAE5 */
+  --green-bg: 245 255 233; /* #F5FFE9 */
+  --green-active-nav: 212 237 218; /* #D4EDDA */
+
+  --gray-900: 17 24 39; /* #111827 */
+  --gray-800: 31 41 55; /* #1F2937 */
+  --gray-700: 55 65 81; /* #374151 */
+  --gray-600: 75 85 99; /* #4B5563 */
+  --gray-500: 107 114 128; /* #6B7280 */
+  --gray-400: 156 163 175; /* #9CA3AF */
+  --gray-300: 209 213 219; /* #D1D5DB */
+  --gray-200: 229 231 235; /* #E5E7EB */
+  --gray-100: 243 244 246; /* #F3F4F6 */
+  --gray-50: 249 250 251; /* #F9FAFB */
+
+  --red-brand: 220 38 38; /* #DC2626 */
+  --red-light: 254 242 242; /* #FEF2F2 */
+  --amber: 217 119 6; /* #D97706 */
+  --amber-light: 255 251 235; /* #FFFBEB */
+  --blue: 37 99 235; /* #2563EB */
+  --blue-light: 239 246 255; /* #EFF6FF */
+  --canvas: 232 236 240; /* #E8ECF0 */
+  --white: 255 255 255; /* #FFFFFF */
+}

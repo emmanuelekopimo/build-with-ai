@@ -1,0 +1,8 @@
+design
+dist
+node_modules
+coverage
+playwright-report
+test-results
+prisma/migrations
+*.py
