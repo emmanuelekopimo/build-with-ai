@@ -116,5 +116,6 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   if (type === 'entity.parse.failed') return res.status(400).json({ error: 'The request body is not valid JSON.' });
   if (type === 'entity.too.large') return res.status(413).json({ error: 'The request is too large.' });
   logger().error({ err: (err as Error)?.stack ?? String(err), url: redactUrl(req.url) }, 'unhandled error');
+  if (process.env.ITAMS_DEBUG_ERRORS) console.error(err);
   res.status(500).json({ error: 'Something went wrong on our side. The error was logged; please try again.' });
 }

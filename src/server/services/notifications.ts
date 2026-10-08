@@ -1,5 +1,6 @@
 import type { NotificationKind, Prisma } from '@prisma/client';
 import { db, type Tx } from '../db';
+import { now as clockNow } from '../lib/clock';
 
 export type MessagePart = { t: string } | { b: string };
 
@@ -17,6 +18,7 @@ export async function notifyIT(
       message: n.message as unknown as Prisma.InputJsonValue,
       link: n.link,
       dedupeKey: n.dedupeKey,
+      createdAt: clockNow(),
     };
     if (n.dedupeKey) {
       await client.notification.upsert({

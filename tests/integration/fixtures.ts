@@ -46,3 +46,27 @@ export async function intakeAssets(s: Session, items: Parameters<typeof intakeBo
   if (v.status !== 200) throw new Error(`validate failed ${v.status} ${JSON.stringify(v.body)}`);
   return v.body.created.map((c: { tag: string }) => c.tag);
 }
+
+import { getOutbox } from '../../src/server/email/mailer';
+
+/** Latest link of a kind sent to an address (from the in-memory mail outbox). */
+export function lastLink(to: string, kind: 'sign' | 'approve' = 'sign'): string {
+  const mails = getOutbox().filter((m) => (Array.isArray(m.to) ? m.to : [m.to]).includes(to.toLowerCase()));
+  for (let i = mails.length - 1; i >= 0; i--) {
+    const m = new RegExp(`/${kind}/([A-Za-z0-9_-]{43})`).exec(mails[i]!.text);
+    if (m) return m[1]!;
+  }
+  throw new Error(`no ${kind} link for ${to}`);
+}
+
+export const STAFF = {
+  samuel: { name: 'Samuel Etuk', department: 'Human Resources', staffId: 'HR-0231', email: 'samuel.etuk@ecews.org', phone: '+234 803 000 0000' },
+  ima: { name: 'Ima Ubong', department: 'Programs', staffId: 'PR-0112', email: 'ima.ubong@ecews.org' },
+};
+
+export const signBodyFor = (name: string, terms: number) => ({
+  typedName: name,
+  departmentRole: 'Human Resources · HR Officer',
+  termsAccepted: Array.from({ length: terms }, () => true),
+  confirmed: true,
+});

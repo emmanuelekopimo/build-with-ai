@@ -119,7 +119,7 @@ describe('status machine: which forms accept which assets', () => {
     ['reinstate + vendor', { form: 'MOVEMENT', to: 'VENDOR', reinstate: true }],
   ];
   const allowed: Record<string, string[]> = {
-    'In Store': ['issuance', 'move to staff', 'move to location'],
+    'In Store': ['issuance', 'move to location'],
     Issued: ['staff return', 'move to staff', 'move to location'],
     Damaged: ['send to vendor', 'reinstate + vendor'],
     'Damaged (in repair)': ['vendor return'],

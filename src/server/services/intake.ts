@@ -9,6 +9,7 @@ import { writeCustody } from './custody';
 import { notifyIT } from './notifications';
 import { nextAssetTag, nextIntakeReference } from './numbering';
 import type { SessionUser } from './sessions';
+import { now as clockNow } from '../lib/clock';
 
 const optStr = (max: number) => z.string().trim().max(max).default('');
 const dateStr = z
@@ -137,7 +138,7 @@ function header(input: IntakeInput) {
 export async function createIntake(input: IntakeInput, user: SessionUser) {
   const id = await withTx(async (tx) => {
     const reference = await nextIntakeReference(tx);
-    const intake = await tx.intake.create({ data: { reference, createdById: user.id, ...header(input) } });
+    const intake = await tx.intake.create({ data: { reference, createdById: user.id, createdAt: clockNow(), ...header(input) } });
     await writeChildren(tx, intake.id, {
       ...input,
       checks: input.checks ?? INTAKE_CHECK_QUESTIONS.map(() => ({ answer: null, remark: null })),
@@ -253,7 +254,7 @@ export async function validateIntake(id: string, user: SessionUser, ip: string):
 
       const location = locations.find((loc) => loc.name === intake.deliveryLocation)!;
       const oemSupport = intake.checks.find((c) => c.question === CHECK_OEM_SUPPORT)?.answer === 'YES';
-      const now = new Date();
+      const now = clockNow();
       const actor = { id: user.id, name: user.name };
       for (const l of intake.lineItems) {
         const { tag, tagNumber } = await nextAssetTag(tx);
@@ -276,6 +277,7 @@ export async function validateIntake(id: string, user: SessionUser, ip: string):
             oemSupport,
             unitCost: l.unitCost,
             notes: l.notes,
+            createdAt: now,
           },
         });
         await writeCustody(tx, {

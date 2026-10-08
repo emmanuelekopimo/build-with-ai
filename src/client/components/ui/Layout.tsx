@@ -13,11 +13,16 @@ export function PageHeader({
   title: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
-  back?: { to: string; label: string };
+  back?: { to?: string; label: string; onClick?: () => void };
 }) {
   return (
     <header className="mb-5">
-      {back ? (
+      {back?.onClick ? (
+        <button type="button" onClick={back.onClick} className="mb-2 inline-flex items-center gap-2 text-md text-gray-500 hover:text-gray-800">
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          {back.label}
+        </button>
+      ) : back?.to ? (
         <Link to={back.to} className="mb-2 inline-flex items-center gap-2 text-md text-gray-500 hover:text-gray-800">
           <ArrowLeft className="h-4 w-4" aria-hidden />
           {back.label}

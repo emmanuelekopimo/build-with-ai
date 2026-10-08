@@ -16,6 +16,7 @@ import { activeLocks, assertNotOnActiveForm, assetState, lockAssetByTag, lockMes
 import { audit } from './audit';
 import { writeCustody } from './custody';
 import { notifyIT } from './notifications';
+import { now as clockNow } from '../lib/clock';
 
 export const PICKER_SLOTS = {
   ISSUANCE: { form: 'ISSUANCE' },
@@ -96,6 +97,7 @@ export function buildWhere(q: ListQuery, user: SessionUser): Prisma.AssetWhereIn
     else if (slot.form === 'RETURN')
       and.push(slot.returner === 'STAFF' ? { status: 'ISSUED' } : { status: 'DAMAGED', repairFormId: { not: null } });
     else if (slot.to === 'VENDOR') and.push({ status: 'DAMAGED', repairFormId: null });
+    else if (slot.to === 'STAFF') and.push({ status: 'ISSUED' });
     else and.push({ status: { in: ['ISSUED', 'IN_STORE'] } });
   }
   return { AND: and };
@@ -292,7 +294,7 @@ export async function reportDamage(tag: string, body: z.infer<typeof reportDamag
     if (!t.ok) throw conflict(t.message);
     const holder = asset.currentHolderId ? await tx.person.findUnique({ where: { id: asset.currentHolderId } }) : null;
     const location = await tx.location.findUniqueOrThrow({ where: { id: asset.locationId } });
-    const now = new Date();
+    const now = clockNow();
     await tx.asset.update({
       where: { id: asset.id },
       data: { status: 'DAMAGED', damageOrigin: 'REPORTED', damagedAt: now, condition: body.condition },
@@ -337,7 +339,7 @@ export async function retireAsset(tag: string, body: z.infer<typeof retireBody>,
     if (!t.ok) throw conflict(t.message);
     const holder = asset.currentHolderId ? await tx.person.findUnique({ where: { id: asset.currentHolderId } }) : null;
     const location = await tx.location.findUniqueOrThrow({ where: { id: asset.locationId } });
-    const now = new Date();
+    const now = clockNow();
     await tx.asset.update({
       where: { id: asset.id },
       data: {
@@ -381,7 +383,7 @@ export async function deleteAsset(tag: string, body: z.infer<typeof deleteBody>,
     await assertNotOnActiveForm(tx, asset);
     const t = transition(assetState(asset), { type: 'DELETE' });
     if (!t.ok) throw conflict(t.message);
-    const now = new Date();
+    const now = clockNow();
     await tx.asset.update({ where: { id: asset.id }, data: { deletedAt: now, deletedById: user.id, deleteReason: body.reason } });
     await writeCustody(tx, {
       assetId: asset.id,

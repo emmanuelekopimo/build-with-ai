@@ -52,7 +52,8 @@ export function csrfProtection(req: Request, _res: Response, next: NextFunction)
   if (!ct.toString().startsWith('application/json')) {
     return next(new HttpError(415, 'Requests must be sent as JSON.'));
   }
-  if (req.sessionInfo) {
+  // Public signing/approval endpoints authenticate by single-use token, not session.
+  if (req.sessionInfo && !req.path.startsWith('/public/')) {
     const header = req.headers['x-csrf-token'];
     if (typeof header !== 'string' || header !== req.sessionInfo.csrfToken) {
       return next(forbidden('Your session security token is missing or out of date. Refresh the page and try again.'));

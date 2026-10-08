@@ -144,9 +144,13 @@ export function formEligibility(state: AssetState, slot: FormSlot): { ok: true }
           ? { ok: true }
           : no(`Only Damaged assets can be sent to a vendor for repair (this one is ${name}).`);
       }
+      if (slot.to === 'STAFF')
+        return state.status === 'ISSUED'
+          ? { ok: true }
+          : no(`Only Issued assets can be moved to another staff member; use an Issuance for In Store assets (this one is ${name}).`);
       return state.status === 'ISSUED' || state.status === 'IN_STORE'
         ? { ok: true }
-        : no(`Only Issued or In Store assets can be moved between staff or locations (this one is ${name}).`);
+        : no(`Only Issued or In Store assets can be moved between locations (this one is ${name}).`);
   }
 }
 

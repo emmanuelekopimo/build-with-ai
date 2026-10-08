@@ -31,3 +31,27 @@ export function linkFromMail(raw: string, kind: 'sign' | 'approve' | 'reset-pass
   const m = new RegExp(`http://localhost:4100/${kind}/([A-Za-z0-9_-]{43})`).exec(text);
   return m ? m[0] : null;
 }
+
+/** Poll the e2e mail folder for the newest link of a kind sent to an address. */
+export async function waitForLink(to: string, kind: 'sign' | 'approve', after = 0): Promise<string> {
+  for (let i = 0; i < 50; i++) {
+    const list = mails().slice(after).filter((m) => new RegExp(`^To: .*${to.replace(/[.@]/g, '\\$&')}`, 'mi').test(m.raw));
+    for (let j = list.length - 1; j >= 0; j--) {
+      const link = linkFromMail(list[j]!.raw, kind);
+      if (link) return link;
+    }
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  throw new Error(`no ${kind} email for ${to}`);
+}
+
+export async function signAt(page: Page, link: string, name: string) {
+  await page.goto(link);
+  await expect(page.getByRole('button', { name: 'Sign & submit' })).toBeDisabled();
+  const boxes = page.getByRole('checkbox');
+  const n = await boxes.count();
+  for (let i = 0; i < n; i++) await boxes.nth(i).click();
+  await page.getByLabel('Type your full name as your signature').fill(name);
+  await page.getByRole('button', { name: 'Sign & submit' }).click();
+  await expect(page.getByText('Thank you - signature recorded')).toBeVisible();
+}

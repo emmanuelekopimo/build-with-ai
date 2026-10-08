@@ -2,8 +2,13 @@
 
 import { TIMEZONE } from './constants';
 
-const dateFmt = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: TIMEZONE });
-const dayMonthFmt = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', timeZone: TIMEZONE });
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const partsFmt = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'numeric', year: 'numeric', timeZone: TIMEZONE });
+/** Day, month index and year in WAT. Month names are fixed ("Sep", never ICU's "Sept"). */
+function watParts(d: Date): { day: string; month: string; year: string } {
+  const p = Object.fromEntries(partsFmt.formatToParts(d).map((x) => [x.type, x.value]));
+  return { day: p.day ?? '', month: MONTHS[Number(p.month) - 1] ?? '', year: p.year ?? '' };
+}
 const timeFmt = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TIMEZONE });
 const longDateFmt = new Intl.DateTimeFormat('en-GB', {
   weekday: 'long',
@@ -20,12 +25,16 @@ const toDate = (d: DateInput): Date | null => (d === null || d === undefined || 
 /** "14 Aug 2026" */
 export function fmtDate(d: DateInput): string {
   const x = toDate(d);
-  return x ? dateFmt.format(x).replace(/,/g, '') : '-';
+  if (!x) return '-';
+  const p = watParts(x);
+  return `${p.day} ${p.month} ${p.year}`;
 }
 /** "14 Aug" */
 export function fmtDayMonth(d: DateInput): string {
   const x = toDate(d);
-  return x ? dayMonthFmt.format(x) : '-';
+  if (!x) return '-';
+  const p = watParts(x);
+  return `${p.day} ${p.month}`;
 }
 /** "09:20" (WAT) */
 export function fmtTime(d: DateInput): string {

@@ -1,6 +1,7 @@
 // Append-only chain of custody. Every status change writes one of these in the same transaction.
 import type { AssetStatus, CustodyEventType, Prisma } from '@prisma/client';
 import type { Tx } from '../db';
+import { now as clockNow } from '../lib/clock';
 
 export interface CustodyInput {
   assetId: string;
@@ -24,7 +25,7 @@ export async function writeCustody(tx: Tx, e: CustodyInput): Promise<void> {
       statusAfter: e.statusAfter,
       actorUserId: e.actor.id ?? null,
       actorName: e.actor.name,
-      occurredAt: e.occurredAt ?? new Date(),
+      occurredAt: e.occurredAt ?? clockNow(),
       fromHolder: e.fromHolder ?? null,
       toHolder: e.toHolder ?? null,
       fromLocation: e.fromLocation ?? null,

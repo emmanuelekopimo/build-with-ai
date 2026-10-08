@@ -10,6 +10,12 @@ import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { RequirePermission } from './components/layout/RequirePermission';
+import { DocumentPage } from './pages/DocumentPage';
+import { FormEditorPage } from './pages/FormEditorPage';
+import { FormsRegistryPage } from './pages/FormsRegistryPage';
+import { SignoffsPage } from './pages/SignoffsPage';
+import { ApprovePage } from './pages/public/ApprovePage';
+import { SignPage } from './pages/public/SignPage';
 
 const DevComponentsPage = lazy(() => import('./pages/DevComponentsPage').then((m) => ({ default: m.DevComponentsPage })));
 
@@ -33,6 +39,11 @@ const appRoutes: RouteObject[] = [
   { path: '/assets', element: guard('asset.view', <AssetRegistryPage />) },
   { path: '/assets/:tag', element: guard('asset.view', <AssetDetailPage />) },
   { path: '/intake/:id?', element: guard('intake.manage', <IntakePage />) },
+  { path: '/forms', element: guard('form.manage', <FormsRegistryPage />) },
+  { path: '/forms/new/:kind', element: guard('form.manage', <FormEditorPage />) },
+  { path: '/forms/:id/edit', element: guard('form.manage', <FormEditorPage />) },
+  { path: '/signoffs', element: guard('signoff.view', <SignoffsPage />) },
+  { path: '/documents/:reference', element: guard('signoff.view', <DocumentPage />) },
   ...(import.meta.env.DEV ? [{ path: '/dev/components', element: <DevComponentsPage /> }] : []),
   { path: '*', element: <NotFoundPage /> },
 ];
@@ -44,6 +55,8 @@ export const router = createBrowserRouter(
       children: [
         { path: '/login', element: <LoginPage /> },
         { path: '/reset-password/:token', element: <ResetPasswordPage /> },
+        { path: '/sign/:token', element: <SignPage /> },
+        { path: '/approve/:token', element: <ApprovePage /> },
         { element: <AppShell />, children: appRoutes },
       ],
     },

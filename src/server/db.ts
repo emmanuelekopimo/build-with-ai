@@ -25,7 +25,9 @@ export async function withTx<T>(fn: (tx: Tx) => Promise<T>, opts: { timeoutMs?: 
       });
     } catch (err) {
       const code = (err as { code?: string }).code;
-      if ((code === 'P2034' || code === '40P01') && attempt < 3) {
+      const dbCode = (err as { meta?: { code?: string } }).meta?.code;
+      const retryable = code === 'P2034' || code === '40P01' || dbCode === '40P01' || dbCode === '40001';
+      if (retryable && attempt < 3) {
         attempt++;
         continue;
       }

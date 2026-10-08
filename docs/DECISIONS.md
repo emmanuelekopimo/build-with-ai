@@ -58,3 +58,8 @@ Each entry: the gap or conflict, the decision, and why. Numbered for reference f
 - **D40. Registry page size 10.** The mockups show 5 rows per page as an illustration; 10 rows keeps the same layout while being practical. All pagination totals are computed.
 - **D41. Intake delivery location** is chosen from the Location list (it becomes the assets' current location), and the project from the Project list; the design shows them as plain fields.
 - **D42. New intakes are created on the first auto-save,** not on page open, so opening Form 1 never burns an IN-xxx reference. The bar reads "New draft not saved yet" until then.
+- **D43. Typed signature must match the name on the form** (case and spacing ignored), so a forwarded link cannot be signed by someone else.
+- **D44. Injectable clock.** Services take "now" from `src/server/lib/clock.ts`. Production always uses real time; the seed pins it to replay historic workflows through the real services, which is how ECEWS-IT-0001 reproduces the AB-06 timeline without bypassing the append-only custody log.
+- **D45. Vendor custody.** While at a vendor for repair, the vendor contact is the asset's holder; the asset's Location is unchanged (the vendor is not a Location). The timeline shows the vendor as the destination.
+- **D46. Location names.** Seeded locations follow the forms ("Uyo HQ Store", "Ikot Ekpene office"), so ECEWS-IT-0001's move reads "Uyo HQ Store → Ikot Ekpene office" where AB-06 shows the shortened "Uyo HQ → Ikot Ekpene".
+- **D47. Auto-reminders issue a fresh link** (tokens are stored only as hashes, so the original link cannot be re-sent) but keep the original expiry; manual Resend/Remind extends the window by 7 days.

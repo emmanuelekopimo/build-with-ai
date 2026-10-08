@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { assetsRouter } from './assets';
 import { authRouter } from './auth';
+import { formsRouter } from './forms';
 import { intakesRouter } from './intakes';
+import { publicRouter } from './public';
 import { metaRouter } from './meta';
 import { notificationsRouter } from './notifications';
 
@@ -13,3 +15,5 @@ apiRouter.use('/', metaRouter);
 apiRouter.use('/', notificationsRouter);
 apiRouter.use('/', assetsRouter);
 apiRouter.use('/', intakesRouter);
+apiRouter.use('/', formsRouter);
+apiRouter.use('/public', publicRouter);
